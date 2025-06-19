@@ -1,0 +1,101 @@
+# NS-3 Project .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.env
+
+# NS-3 Build artifacts
+build/
+cmake-cache/
+.lock-ns3*
+.qmake.stash
+
+# NS-3 Generated files
+*.pcap
+*.tr
+*.xml
+*.routes
+!CMakeLists.txt
+!*.example.xml
+
+# NetAnim build files
+netanim-*/
+*.o
+*.so
+*.a
+moc_*.cpp
+moc_*.o
+
+# Documentation build
+doc/html/
+doc/latex/
+doc/xml/
+
+# Bake build system
+bake/build/
+bake/source/
+bake/.built
+bake/.configured
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Office documents (if they are temporary)
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# Compiled binaries
+*.exe
+*.out
+*.app
+
+# C/C++ build artifacts
+*.obj
+*.elf
+*.gch
+*.pch
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# CMake
+CMakeFiles/
+cmake_install.cmake
+CMakeCache.txt
+Makefile
+*.make
+
+# Test results
+test-results/
+*.xml.bak
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Configuration files that might contain sensitive info
+.config
+*.conf
+!*.example.conf

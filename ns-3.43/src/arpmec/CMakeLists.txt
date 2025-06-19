@@ -1,0 +1,33 @@
+build_lib(
+  LIBNAME arpmec
+  SOURCE_FILES
+    helper/arpmec-helper.cc
+    model/arpmec-dpd.cc
+    model/arpmec-id-cache.cc
+    model/arpmec-neighbor.cc
+    model/arpmec-packet.cc
+    model/arpmec-routing-protocol.cc
+    model/arpmec-rqueue.cc
+    model/arpmec-rtable.cc
+  HEADER_FILES
+    helper/arpmec-helper.h
+    model/arpmec-dpd.h
+    model/arpmec-id-cache.h
+    model/arpmec-neighbor.h
+    model/arpmec-packet.h
+    model/arpmec-routing-protocol.h
+    model/arpmec-rqueue.h
+    model/arpmec-rtable.h
+  LIBRARIES_TO_LINK
+    ${libapplications}
+    ${libinternet-apps}
+    ${libwifi}
+    ${libnetanim}
+  TEST_SOURCES
+    test/arpmec-id-cache-test-suite.cc
+    test/arpmec-regression.cc
+    test/arpmec-test-suite.cc
+    test/loopback.cc
+    test/bug-772.cc
+    test/arpmec-packet-test-suite.cc
+)
