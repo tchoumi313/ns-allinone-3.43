@@ -4,6 +4,7 @@ build_lib(
     helper/arpmec-helper.cc
     model/arpmec-dpd.cc
     model/arpmec-id-cache.cc
+    model/arpmec-lqe.cc
     model/arpmec-neighbor.cc
     model/arpmec-packet.cc
     model/arpmec-routing-protocol.cc
@@ -13,6 +14,7 @@ build_lib(
     helper/arpmec-helper.h
     model/arpmec-dpd.h
     model/arpmec-id-cache.h
+    model/arpmec-lqe.h
     model/arpmec-neighbor.h
     model/arpmec-packet.h
     model/arpmec-routing-protocol.h
@@ -25,6 +27,7 @@ build_lib(
     ${libnetanim}
   TEST_SOURCES
     test/arpmec-id-cache-test-suite.cc
+    test/arpmec-lqe-test-suite.cc
     test/arpmec-regression.cc
     test/arpmec-test-suite.cc
     test/loopback.cc
