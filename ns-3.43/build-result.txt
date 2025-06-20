@@ -1,0 +1,5 @@
+[0/2] Re-checking globbed directories...
+[1/3] Building CXX object src/arpmec/CMakeFiles/arpmec-test.dir/test/arpmec-packet-test-suite.cc.o
+[2/3] Linking CXX shared library /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-arpmec-test-default.so
+Finished executing the following commands:
+/usr/bin/cmake --build /home/donsoft/ns-allinone-3.43/ns-3.43/cmake-cache -j 3

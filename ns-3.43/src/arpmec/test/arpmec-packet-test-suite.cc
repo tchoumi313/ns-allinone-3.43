@@ -2,6 +2,7 @@
 #include "ns3/arpmec-packet.h"
 #include "ns3/packet.h"
 #include <sstream>
+#include <cmath> // For std::abs in LQE field testing
 
 namespace ns3 {
 namespace arpmec {
@@ -12,16 +13,33 @@ public:
     ArpmecPacketTest() : TestCase("ARPMEC Packet Test") {}
     void DoRun() override
     {
-        // Test pour ArpmecHelloHeader
+        // Test pour ArpmecHelloHeader with LQE fields
         ArpmecHelloHeader hello;
         hello.SetNodeId(123);
         hello.SetChannelId(5);
+        hello.SetSequenceNumber(42);
+        hello.SetRssi(-65.5);        // RSSI in dBm
+        hello.SetPdr(0.95);          // PDR value (95%)
+        hello.SetTimestamp(1000000); // Timestamp in microseconds
+        
         Ptr<Packet> packet = Create<Packet>();
         packet->AddHeader(hello);
         ArpmecHelloHeader helloDeserialized;
         packet->RemoveHeader(helloDeserialized);
+        
         NS_TEST_ASSERT_MSG_EQ(helloDeserialized.GetNodeId(), 123, "Node ID mismatch in HELLO");
         NS_TEST_ASSERT_MSG_EQ(helloDeserialized.GetChannelId(), 5, "Channel ID mismatch in HELLO");
+        NS_TEST_ASSERT_MSG_EQ(helloDeserialized.GetSequenceNumber(), 42, "Sequence number mismatch in HELLO");
+        
+        // Test RSSI with tolerance
+        double rssiDiff = std::abs(helloDeserialized.GetRssi() - (-65.5));
+        NS_TEST_ASSERT_MSG_LT(rssiDiff, 0.001, "RSSI mismatch in HELLO");
+        
+        // Test PDR with tolerance  
+        double pdrDiff = std::abs(helloDeserialized.GetPdr() - 0.95);
+        NS_TEST_ASSERT_MSG_LT(pdrDiff, 0.001, "PDR mismatch in HELLO");
+        
+        NS_TEST_ASSERT_MSG_EQ(helloDeserialized.GetTimestamp(), 1000000, "Timestamp mismatch in HELLO");
 
         // Test pour ArpmecJoinHeader
         ArpmecJoinHeader join;

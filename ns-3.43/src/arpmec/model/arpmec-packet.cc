@@ -17,6 +17,7 @@
 
 #include "ns3/address-utils.h"
 #include "ns3/packet.h"
+#include <cmath> // For std::abs in double comparison
 
 namespace ns3
 {
@@ -70,7 +71,7 @@ TypeHeader::Deserialize(Buffer::Iterator start)
     case ARPMECTYPE_RREQ:
     case ARPMECTYPE_RREP:
     case ARPMECTYPE_RERR:
-    case ARPMECTYPE_RREP_ACK: 
+    case ARPMECTYPE_RREP_ACK:
     case ARPMEC_HELLO:
     case ARPMEC_JOIN:
     case ARPMEC_CH_NOTIFICATION:
@@ -701,14 +702,14 @@ operator<<(std::ostream& os, const RerrHeader& h)
 //-----------------------------------------------------------------------------
 NS_OBJECT_ENSURE_REGISTERED(ArpmecHelloHeader);
 
-ArpmecHelloHeader::ArpmecHelloHeader() : m_nodeId(0), m_channelId(0) {}
+ArpmecHelloHeader::ArpmecHelloHeader() : m_nodeId(0), m_channelId(0), m_sequenceNumber(0), m_rssi(-100.0), m_pdr(0.0), m_timestamp(0) {}
 
 TypeId
 ArpmecHelloHeader::GetTypeId()
 {
-    static TypeId tid = TypeId("ns3::myaodv::ArpmecHelloHeader")
+    static TypeId tid = TypeId("ns3::arpmec::ArpmecHelloHeader")
         .SetParent<Header>()
-        .SetGroupName("Myaodv")
+        .SetGroupName("Arpmec")
         .AddConstructor<ArpmecHelloHeader>();
     return tid;
 }
@@ -722,17 +723,22 @@ ArpmecHelloHeader::GetInstanceTypeId() const
 uint32_t
 ArpmecHelloHeader::GetSerializedSize() const
 {
-       return 9; // 4 bytes for nodeId, 1 byte for channelId, 4 bytes for sequenceNumber
-    // Note: If you want to include a sequence number, you can uncomment the line below
-    //return 5; // 4 bytes pour nodeId, 1 byte pour channelId
+    return 33; // 4 bytes nodeId + 1 byte channelId + 4 bytes sequenceNumber + 8 bytes rssi + 8 bytes pdr + 8 bytes timestamp
 }
 
 void
 ArpmecHelloHeader::Serialize(Buffer::Iterator start) const
 {
-    start.WriteHtonU32(m_nodeId);
+     start.WriteHtonU32(m_nodeId);
     start.WriteU8(m_channelId);
     start.WriteHtonU32(m_sequenceNumber);
+
+    // Fix: Handle negative RSSI values properly
+    int64_t rssiInt = static_cast<int64_t>(m_rssi * 1000000);
+    start.WriteHtonU64(static_cast<uint64_t>(rssiInt));
+
+    start.WriteHtonU64(static_cast<uint64_t>(m_pdr * 1000000));
+    start.WriteHtonU64(m_timestamp);
 }
 
 uint32_t
@@ -741,6 +747,16 @@ ArpmecHelloHeader::Deserialize(Buffer::Iterator start)
     Buffer::Iterator i = start;
     m_nodeId = i.ReadNtohU32();
     m_channelId = i.ReadU8();
+    m_sequenceNumber = i.ReadNtohU32();
+
+    // Fix: Handle negative RSSI values properly
+    uint64_t rssiRaw = i.ReadNtohU64();
+    int64_t rssiInt = static_cast<int64_t>(rssiRaw);
+    m_rssi = static_cast<double>(rssiInt) / 1000000.0;
+
+    m_pdr = static_cast<double>(i.ReadNtohU64()) / 1000000.0;
+    m_timestamp = i.ReadNtohU64();
+
     uint32_t dist = i.GetDistanceFrom(start);
     NS_ASSERT(dist == GetSerializedSize());
     return dist;
@@ -749,15 +765,23 @@ ArpmecHelloHeader::Deserialize(Buffer::Iterator start)
 void
 ArpmecHelloHeader::Print(std::ostream& os) const
 {
-    os << "HELLO from node " << m_nodeId << " on channel " 
-    << static_cast<int>(m_channelId)
-         << " with sequence number " << m_sequenceNumber;
+    os << "HELLO from node " << m_nodeId << " on channel "
+       << static_cast<int>(m_channelId)
+       << " with sequence number " << m_sequenceNumber
+       << ", RSSI: " << m_rssi << " dBm"
+       << ", PDR: " << m_pdr
+       << ", timestamp: " << m_timestamp << " μs";
 }
 
 bool
 ArpmecHelloHeader::operator==(const ArpmecHelloHeader& o) const
 {
-    return (m_nodeId == o.m_nodeId && m_channelId == o.m_channelId && m_sequenceNumber == o.m_sequenceNumber);
+    return (m_nodeId == o.m_nodeId &&
+            m_channelId == o.m_channelId &&
+            m_sequenceNumber == o.m_sequenceNumber &&
+            std::abs(m_rssi - o.m_rssi) < 0.001 &&      // Small tolerance for double comparison
+            std::abs(m_pdr - o.m_pdr) < 0.001 &&        // Small tolerance for double comparison
+            m_timestamp == o.m_timestamp);
 }
 
 std::ostream&
@@ -781,9 +805,9 @@ ArpmecJoinHeader::ArpmecJoinHeader() : m_nodeId(0), m_chId(0) {}
 TypeId
 ArpmecJoinHeader::GetTypeId()
 {
-    static TypeId tid = TypeId("ns3::myaodv::ArpmecJoinHeader")
+    static TypeId tid = TypeId("ns3::arpmec::ArpmecJoinHeader")
         .SetParent<Header>()
-        .SetGroupName("Myaodv")
+        .SetGroupName("Arpmec")
         .AddConstructor<ArpmecJoinHeader>();
     return tid;
 }
@@ -847,9 +871,9 @@ ArpmecChNotificationHeader::ArpmecChNotificationHeader() : m_chId(0) {}
 TypeId
 ArpmecChNotificationHeader::GetTypeId()
 {
-    static TypeId tid = TypeId("ns3::myaodv::ArpmecChNotificationHeader")
+    static TypeId tid = TypeId("ns3::arpmec::ArpmecChNotificationHeader")
         .SetParent<Header>()
-        .SetGroupName("Myaodv")
+        .SetGroupName("Arpmec")
         .AddConstructor<ArpmecChNotificationHeader>();
     return tid;
 }
@@ -927,9 +951,9 @@ ArpmecClusterListHeader::ArpmecClusterListHeader() {}
 TypeId
 ArpmecClusterListHeader::GetTypeId()
 {
-    static TypeId tid = TypeId("ns3::myaodv::ArpmecClusterListHeader")
+    static TypeId tid = TypeId("ns3::arpmec::ArpmecClusterListHeader")
         .SetParent<Header>()
-        .SetGroupName("Myaodv")
+        .SetGroupName("Arpmec")
         .AddConstructor<ArpmecClusterListHeader>();
     return tid;
 }
@@ -1027,9 +1051,9 @@ ArpmecDataHeader::ArpmecDataHeader() : m_sourceId(0), m_destId(0), m_chId(0) {}
 TypeId
 ArpmecDataHeader::GetTypeId()
 {
-    static TypeId tid = TypeId("ns3::myaodv::ArpmecDataHeader")
+    static TypeId tid = TypeId("ns3::arpmec::ArpmecDataHeader")
         .SetParent<Header>()
-        .SetGroupName("Myaodv")
+        .SetGroupName("Arpmec")
         .AddConstructor<ArpmecDataHeader>();
     return tid;
 }
@@ -1095,9 +1119,9 @@ ArpmecAbdicateHeader::ArpmecAbdicateHeader() : m_chId(0) {}
 TypeId
 ArpmecAbdicateHeader::GetTypeId()
 {
-    static TypeId tid = TypeId("ns3::myaodv::ArpmecAbdicateHeader")
+    static TypeId tid = TypeId("ns3::arpmec::ArpmecAbdicateHeader")
         .SetParent<Header>()
-        .SetGroupName("Myaodv")
+        .SetGroupName("Arpmec")
         .AddConstructor<ArpmecAbdicateHeader>();
     return tid;
 }

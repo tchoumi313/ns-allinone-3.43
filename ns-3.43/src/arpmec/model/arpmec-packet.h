@@ -665,7 +665,7 @@ std::ostream& operator<<(std::ostream& os, const RerrHeader&);
 
 // Dans aodv-packet.h
 /**
- * \ingroup myaodv
+ * \ingroup arpmec
  * \brief ARPMEC Hello Header
  *
  * This header is used to send Hello messages in the ARPMEC protocol.
@@ -718,33 +718,33 @@ class ArpmecHelloHeader : public Header
      * \brief Set the node ID
      * \param id the node ID
      */
-    void SetNodeId(uint32_t id) 
-    { 
-      m_nodeId = id; 
+    void SetNodeId(uint32_t id)
+    {
+      m_nodeId = id;
     }
     /**
      * \brief Get the node ID
      * \return the node ID
      */
-    uint32_t GetNodeId() const 
-    { 
-      return m_nodeId; 
+    uint32_t GetNodeId() const
+    {
+      return m_nodeId;
     }
     /**
      * \brief Set the channel ID
      * \param cid the channel ID
      */
-    void SetChannelId(uint8_t cid) 
-    { 
-      m_channelId = cid; 
+    void SetChannelId(uint8_t cid)
+    {
+      m_channelId = cid;
     }
     /**
      * \brief Get the channel ID
      * \return the channel ID
      */
-    uint8_t GetChannelId() const 
-    { 
-      return m_channelId; 
+    uint8_t GetChannelId() const
+    {
+      return m_channelId;
     }
     /**
      * \brief Comparison operator
@@ -753,10 +753,49 @@ class ArpmecHelloHeader : public Header
      */
 
 //--------------------------------------------------------
-//Step 4
+//Step 4: Sequence Number for PDR calculation
 //--------------------------------------------------------
     void SetSequenceNumber(uint32_t seq) { m_sequenceNumber = seq; }
     uint32_t GetSequenceNumber() const { return m_sequenceNumber; }
+
+//--------------------------------------------------------
+//LQE (Link Quality Estimation) Fields - Algorithm 2
+//--------------------------------------------------------
+    /**
+     * \brief Set the RSSI value
+     * \param rssi the RSSI value in dBm
+     */
+    void SetRssi(double rssi) { m_rssi = rssi; }
+
+    /**
+     * \brief Get the RSSI value
+     * \return the RSSI value in dBm
+     */
+    double GetRssi() const { return m_rssi; }
+
+    /**
+     * \brief Set the PDR value
+     * \param pdr the Packet Delivery Ratio (0.0 to 1.0)
+     */
+    void SetPdr(double pdr) { m_pdr = pdr; }
+
+    /**
+     * \brief Get the PDR value
+     * \return the Packet Delivery Ratio (0.0 to 1.0)
+     */
+    double GetPdr() const { return m_pdr; }
+
+    /**
+     * \brief Set the timestamp for delay calculation
+     * \param timestamp the timestamp in microseconds
+     */
+    void SetTimestamp(uint64_t timestamp) { m_timestamp = timestamp; }
+
+    /**
+     * \brief Get the timestamp
+     * \return the timestamp in microseconds
+     */
+    uint64_t GetTimestamp() const { return m_timestamp; }
 
     bool operator==(const ArpmecHelloHeader& o) const;
 
@@ -770,9 +809,14 @@ class ArpmecHelloHeader : public Header
      * \param h the ArpmecHelloHeader
      * \return updated stream
      */
-    uint32_t m_nodeId;    // ID du nœud
-    uint8_t m_channelId;  // ID du canal
-    uint32_t m_sequenceNumber; // Added for PDR  step 4
+    uint32_t m_nodeId;         // ID du nœud
+    uint8_t m_channelId;       // ID du canal
+    uint32_t m_sequenceNumber; // Added for PDR calculation - step 4
+
+    // LQE (Link Quality Estimation) fields - Algorithm 2
+    double m_rssi;             // RSSI value in dBm
+    double m_pdr;              // Packet Delivery Ratio (0.0 to 1.0)
+    uint64_t m_timestamp;      // Timestamp for delay calculation (microseconds)
 
 };
 // Other header classes (ArpmecJoinHeader, etc.) remain unchanged
@@ -781,7 +825,7 @@ class ArpmecHelloHeader : public Header
 
 // Dans aodv-packet.h
 /**
- * \ingroup myaodv
+ * \ingroup arpmec
  * \brief ARPMEC Join Header
  *
  * This header is used to send Join messages in the ARPMEC protocol.
@@ -871,7 +915,7 @@ class ArpmecJoinHeader : public Header
 
 // Dans aodv-packet.h
 /**
- * \ingroup myaodv
+ * \ingroup arpmec
  * \brief ARPMEC Channel Notification Header
  *
  * This header is used to send channel notification messages in the ARPMEC protocol.
@@ -923,33 +967,33 @@ class ArpmecChNotificationHeader : public Header
      * \brief Set the channel ID
      * \param cid the channel ID
      */
-    void SetChId(uint32_t cid) 
-    { 
-      m_chId = cid; 
+    void SetChId(uint32_t cid)
+    {
+      m_chId = cid;
     }
     /**
      * \brief Get the channel ID
      * \return the channel ID
      */
-    uint32_t GetChId() const 
-    { 
-      return m_chId; 
+    uint32_t GetChId() const
+    {
+      return m_chId;
     }
     /**
      * \brief Set the cluster members
      * \param members the list of cluster members
      */
-    void SetClusterMembers(const std::vector<uint32_t>& members) 
-    { 
-      m_clusterMembers = members; 
+    void SetClusterMembers(const std::vector<uint32_t>& members)
+    {
+      m_clusterMembers = members;
     }
     /**
      * \brief Add a cluster member
      * \param member the cluster member to add
      */
-    const std::vector<uint32_t>& GetClusterMembers() const 
-    { 
-      return m_clusterMembers; 
+    const std::vector<uint32_t>& GetClusterMembers() const
+    {
+      return m_clusterMembers;
     }
 
     /**
@@ -965,7 +1009,7 @@ class ArpmecChNotificationHeader : public Header
 
 // Dans aodv-packet.h
 /**
- * \ingroup myaodv
+ * \ingroup arpmec
  * \brief ARPMEC Cluster List Header
  *
  * This header is used to send cluster list messages in the ARPMEC protocol.
@@ -979,7 +1023,7 @@ class ArpmecClusterListHeader : public Header
      * Initializes an empty cluster list.
      */
   public:
-    
+
     ArpmecClusterListHeader();
     /**
      * \brief Constructor with parameters
@@ -1020,17 +1064,17 @@ class ArpmecClusterListHeader : public Header
      * \brief Set the clusters
      * \param clusters the list of clusters, each represented by a pair of cluster ID and a list of member IDs
      */
-    void SetClusters(const std::vector<std::pair<uint32_t, std::vector<uint32_t>>>& clusters) 
-    { 
-      m_clusters = clusters; 
+    void SetClusters(const std::vector<std::pair<uint32_t, std::vector<uint32_t>>>& clusters)
+    {
+      m_clusters = clusters;
     }
     /**
      * \brief Get the clusters
      * \return the list of clusters, each represented by a pair of cluster ID and a list of member IDs
      */
-    const std::vector<std::pair<uint32_t, std::vector<uint32_t>>>& GetClusters() const 
-    { 
-      return m_clusters; 
+    const std::vector<std::pair<uint32_t, std::vector<uint32_t>>>& GetClusters() const
+    {
+      return m_clusters;
     }
     /**
      * \brief Add a cluster
@@ -1049,7 +1093,7 @@ class ArpmecClusterListHeader : public Header
 
 // Dans aodv-packet.h
 /**
- * \ingroup myaodv
+ * \ingroup arpmec
  * \brief ARPMEC Data Header
  *
  * This header is used to send data messages in the ARPMEC protocol.
@@ -1102,49 +1146,49 @@ class ArpmecDataHeader : public Header
      * \brief Set the source ID
      * \param id the source ID
      */
-    void SetSourceId(uint32_t id) 
-    { 
-      m_sourceId = id; 
+    void SetSourceId(uint32_t id)
+    {
+      m_sourceId = id;
     }
     /**
      * \brief Get the source ID
      * \return the source ID
      */
-    uint32_t GetSourceId() const 
-    { 
-      return m_sourceId; 
+    uint32_t GetSourceId() const
+    {
+      return m_sourceId;
     }
     /**
      * \brief Set the destination ID
      * \param id the destination ID
      */
-    void SetDestId(uint32_t id) 
-    { 
-      m_destId = id; 
+    void SetDestId(uint32_t id)
+    {
+      m_destId = id;
     }
     /**
      * \brief Get the destination ID
      * \return the destination ID
      */
-    uint32_t GetDestId() const 
-    { 
-      return m_destId; 
+    uint32_t GetDestId() const
+    {
+      return m_destId;
     }
     /**
      * \brief Set the channel ID
      * \param cid the channel ID
      */
-    void SetChId(uint32_t cid) 
-    { 
-      m_chId = cid; 
+    void SetChId(uint32_t cid)
+    {
+      m_chId = cid;
     }
     /**
      * \brief Get the channel ID
      * \return the channel ID
      */
-    uint32_t GetChId() const 
-    { 
-      return m_chId; 
+    uint32_t GetChId() const
+    {
+      return m_chId;
     }
 
     bool operator==(const ArpmecDataHeader& o) const;
@@ -1163,7 +1207,7 @@ class ArpmecDataHeader : public Header
 
 // Dans aodv-packet.h
 /**
- * \ingroup myaodv
+ * \ingroup arpmec
  * \brief ARPMEC Abdicate Header
  *
  * This header is used to send abdication messages in the ARPMEC protocol.
@@ -1216,17 +1260,17 @@ class ArpmecAbdicateHeader : public Header
      * \brief Set the channel ID
      * \param cid the channel ID of the CH that is abdicating
      */
-    void SetChId(uint32_t cid) 
-    { 
-      m_chId = cid; 
+    void SetChId(uint32_t cid)
+    {
+      m_chId = cid;
     }
     /**
      * \brief Get the channel ID
      * \return the channel ID of the CH that is abdicating
      */
-    uint32_t GetChId() const 
+    uint32_t GetChId() const
     {
-       return m_chId; 
+       return m_chId;
       }
     /**
      * \brief Comparison operator

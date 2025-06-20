@@ -25,7 +25,7 @@
 namespace ns3
 {
 
-NS_LOG_COMPONENT_DEFINE("AodvRequestQueue");
+NS_LOG_COMPONENT_DEFINE("ArpmecRequestQueue");
 
 namespace arpmec
 {
