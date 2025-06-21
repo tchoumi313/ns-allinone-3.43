@@ -181,6 +181,8 @@ ArpmecLqe::GetBestNeighbor()
 std::vector<uint32_t>
 ArpmecLqe::GetNeighborsByQuality()
 {
+    NS_LOG_FUNCTION(this);
+
     std::vector<std::pair<uint32_t, double>> neighborScores;
 
     // Collect active neighbors and their scores
@@ -189,6 +191,13 @@ ArpmecLqe::GetNeighborsByQuality()
         if (IsNeighborActive(neighbor.first))
         {
             neighborScores.emplace_back(neighbor.first, neighbor.second.linkScore);
+            NS_LOG_DEBUG("Active neighbor " << neighbor.first
+                         << " with score " << neighbor.second.linkScore);
+        }
+        else
+        {
+            NS_LOG_DEBUG("Inactive neighbor " << neighbor.first
+                         << " last heard: " << (Simulator::Now() - neighbor.second.lastHeardFrom).GetSeconds() << "s ago");
         }
     }
 
@@ -205,6 +214,7 @@ ArpmecLqe::GetNeighborsByQuality()
         result.push_back(pair.first);
     }
 
+    NS_LOG_DEBUG("Returning " << result.size() << " active neighbors sorted by quality");
     return result;
 }
 

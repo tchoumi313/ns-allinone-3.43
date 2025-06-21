@@ -170,6 +170,10 @@ RoutingProtocol::RoutingProtocol()
       m_lastBcastTime(Seconds(0))
 {
     m_nb.SetCallback(MakeCallback(&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
+    
+    // Initialize ARPMEC modules
+    m_lqe = CreateObject<ArpmecLqe>();
+    m_clustering = CreateObject<ArpmecClustering>();
 }
 
 TypeId
@@ -399,6 +403,10 @@ RoutingProtocol::Start()
 
     m_rerrRateLimitTimer.SetFunction(&RoutingProtocol::RerrRateLimitTimerExpire, this);
     m_rerrRateLimitTimer.Schedule(Seconds(1));
+
+    // Start ARPMEC clustering protocol
+    m_clustering->Start();
+    NS_LOG_INFO("ARPMEC clustering started for node " << m_ipv4->GetObject<Node>()->GetId());
 }
 
 Ptr<Ipv4Route>
@@ -711,6 +719,15 @@ RoutingProtocol::SetIpv4(Ptr<Ipv4> ipv4)
         /*nextHop=*/Ipv4Address::GetLoopback(),
         /*lifetime=*/Simulator::GetMaximumSimulationTime());
     m_routingTable.AddRoute(rt);
+
+    // Initialize ARPMEC clustering module with node ID
+    uint32_t nodeId = m_ipv4->GetObject<Node>()->GetId();
+    m_clustering->Initialize(nodeId, m_lqe);
+    
+    // Set up clustering packet send callback
+    m_clustering->SetSendPacketCallback(MakeCallback(&RoutingProtocol::SendClusteringPacket, this));
+    
+    NS_LOG_INFO("ARPMEC initialized for node " << nodeId);
 
     Simulator::ScheduleNow(&RoutingProtocol::Start, this);
 }
@@ -1246,14 +1263,17 @@ RoutingProtocol::RecvArpmec(Ptr<Socket> socket)
     }
     case ARPMEC_HELLO: {
         NS_LOG_DEBUG("Received ARPMEC_HELLO from " << sender);
+        ProcessArpmecHello(packet, sender);
         break;
     }
     case ARPMEC_JOIN: {
         NS_LOG_DEBUG("Received ARPMEC_JOIN from " << sender);
+        ProcessArpmecJoin(packet, sender);
         break;
     }
     case ARPMEC_CH_NOTIFICATION: {
         NS_LOG_DEBUG("Received ARPMEC_CH_NOTIFICATION from " << sender);
+        ProcessArpmecChNotification(packet, sender);
         break;
     }
     case ARPMEC_CLUSTER_LIST: {
@@ -2002,29 +2022,33 @@ void
 RoutingProtocol::SendHello()
 {
     NS_LOG_FUNCTION(this);
-    /* Broadcast a RREP with TTL = 1 with the RREP message fields set as follows:
-     *   Destination IP Address         The node's IP address.
-     *   Destination Sequence Number    The node's latest sequence number.
-     *   Hop Count                      0
-     *   Lifetime                       AllowedHelloLoss * HelloInterval
-     */
+    
+    // Send ARPMEC HELLO messages with LQE information
     for (auto j = m_socketAddresses.begin(); j != m_socketAddresses.end(); ++j)
     {
         Ptr<Socket> socket = j->first;
         Ipv4InterfaceAddress iface = j->second;
-        RrepHeader helloHeader(/*prefixSize=*/0,
-                               /*hopCount=*/0,
-                               /*dst=*/iface.GetLocal(),
-                               /*dstSeqNo=*/m_seqNo,
-                               /*origin=*/iface.GetLocal(),
-                               /*lifetime=*/Time(m_allowedHelloLoss * m_helloInterval));
+        
+        // Create ARPMEC HELLO header with LQE information
+        ArpmecHelloHeader helloHeader;
+        uint32_t nodeId = GetNodeIdFromAddress(iface.GetLocal());
+        helloHeader.SetNodeId(nodeId);
+        helloHeader.SetChannelId(1); // Default channel for now
+        helloHeader.SetSequenceNumber(m_seqNo);
+        
+        // Add simulated LQE values (in a real implementation, these would come from PHY layer)
+        helloHeader.SetRssi(-50.0); // Simulated RSSI value
+        helloHeader.SetPdr(0.95);   // Simulated PDR value
+        helloHeader.SetTimestamp(Simulator::Now().GetNanoSeconds());
+        
         Ptr<Packet> packet = Create<Packet>();
         SocketIpTtlTag tag;
         tag.SetTtl(1);
         packet->AddPacketTag(tag);
         packet->AddHeader(helloHeader);
-        TypeHeader tHeader(ARPMECTYPE_RREP);
+        TypeHeader tHeader(ARPMEC_HELLO);
         packet->AddHeader(tHeader);
+        
         // Send to all-hosts broadcast if on /32 addr, subnet-directed otherwise
         Ipv4Address destination;
         if (iface.GetMask() == Ipv4Mask::GetOnes())
@@ -2035,8 +2059,11 @@ RoutingProtocol::SendHello()
         {
             destination = iface.GetBroadcast();
         }
+        
         Time jitter = Time(MilliSeconds(m_uniformRandomVariable->GetInteger(0, 10)));
         Simulator::Schedule(jitter, &RoutingProtocol::SendTo, this, socket, packet, destination);
+        
+        NS_LOG_DEBUG("Node " << nodeId << " sending ARPMEC HELLO message");
     }
 }
 
@@ -2305,6 +2332,129 @@ RoutingProtocol::DoInitialize()
         m_htimer.Schedule(MilliSeconds(startTime));
     }
     Ipv4RoutingProtocol::DoInitialize();
+}
+
+void
+RoutingProtocol::ProcessArpmecHello(Ptr<Packet> p, Ipv4Address src)
+{
+    NS_LOG_FUNCTION(this << src);
+    
+    ArpmecHelloHeader helloHeader;
+    p->RemoveHeader(helloHeader);
+    
+    // Extract LQE information from HELLO message
+    double rssi = helloHeader.GetRssi();
+    double pdr = helloHeader.GetPdr(); 
+    uint64_t timestamp = helloHeader.GetTimestamp();
+    Time receivedTime = Simulator::Now();
+    
+    // Convert sender IP to node ID (assumes sequential assignment)
+    uint32_t senderId = GetNodeIdFromAddress(src);
+    
+    // Update LQE with received HELLO information
+    m_lqe->UpdateLinkQuality(senderId, rssi, pdr, timestamp, receivedTime);
+    
+    // Pass HELLO to clustering module
+    m_clustering->ProcessHelloMessage(senderId, helloHeader);
+    
+    NS_LOG_DEBUG("Processed ARPMEC_HELLO from node " << senderId << 
+                 " (RSSI: " << rssi << ", PDR: " << pdr << ")");
+}
+
+void
+RoutingProtocol::ProcessArpmecJoin(Ptr<Packet> p, Ipv4Address src)
+{
+    NS_LOG_FUNCTION(this << src);
+    
+    ArpmecJoinHeader joinHeader;
+    p->RemoveHeader(joinHeader);
+    
+    uint32_t senderId = GetNodeIdFromAddress(src);
+    
+    // Pass JOIN message to clustering module
+    m_clustering->ProcessJoinMessage(senderId, joinHeader);
+    
+    NS_LOG_DEBUG("Processed ARPMEC_JOIN from node " << senderId);
+}
+
+void
+RoutingProtocol::ProcessArpmecChNotification(Ptr<Packet> p, Ipv4Address src)
+{
+    NS_LOG_FUNCTION(this << src);
+    
+    ArpmecChNotificationHeader chHeader;
+    p->RemoveHeader(chHeader);
+    
+    uint32_t senderId = GetNodeIdFromAddress(src);
+    
+    // Pass CH_NOTIFICATION to clustering module
+    m_clustering->ProcessChNotificationMessage(senderId, chHeader);
+    
+    NS_LOG_DEBUG("Processed ARPMEC_CH_NOTIFICATION from node " << senderId);
+}
+
+uint32_t
+RoutingProtocol::GetNodeIdFromAddress(Ipv4Address address)
+{
+    // Simple conversion for simulation: extract last octet as node ID
+    // In real deployment, this would need a proper address-to-ID mapping
+    uint32_t addr = address.Get();
+    return (addr & 0xFF) - 1; // Assuming 10.0.0.1 -> node 0, 10.0.0.2 -> node 1, etc.
+}
+
+Ipv4Address
+RoutingProtocol::GetAddressFromNodeId(uint32_t nodeId)
+{
+    // Reverse conversion: node ID to IP address
+    // Assuming node 0 -> 10.0.0.1, node 1 -> 10.0.0.2, etc.
+    return Ipv4Address(Ipv4Address("10.0.0.0").Get() + nodeId + 1);
+}
+
+void
+RoutingProtocol::SendClusteringPacket(Ptr<Packet> packet, uint32_t destination)
+{
+    NS_LOG_FUNCTION(this << destination);
+    
+    if (m_socketAddresses.empty())
+    {
+        NS_LOG_WARN("No socket addresses available for sending clustering packet");
+        return;
+    }
+    
+    // Get the first available socket (all should work for broadcast)
+    Ptr<Socket> socket = m_socketAddresses.begin()->first;
+    Ipv4InterfaceAddress iface = m_socketAddresses.begin()->second;
+    
+    Ipv4Address targetAddress;
+    
+    if (destination == 0) // Broadcast
+    {
+        // Use broadcast address for this interface
+        if (iface.GetMask() == Ipv4Mask::GetOnes())
+        {
+            targetAddress = Ipv4Address("255.255.255.255");
+        }
+        else
+        {
+            targetAddress = iface.GetBroadcast();
+        }
+        
+        // Set TTL to 1 for local broadcast (clustering messages should be 1-hop)
+        SocketIpTtlTag tag;
+        tag.SetTtl(1);
+        packet->AddPacketTag(tag);
+        
+        NS_LOG_DEBUG("Sending clustering packet to broadcast address " << targetAddress);
+    }
+    else // Unicast to specific node
+    {
+        targetAddress = GetAddressFromNodeId(destination);
+        NS_LOG_DEBUG("Sending clustering packet to node " << destination << " at address " << targetAddress);
+    }
+    
+    // Add some jitter to avoid collisions
+    Time jitter = Time(MilliSeconds(m_uniformRandomVariable->GetInteger(0, 5)));
+    Simulator::Schedule(jitter, &RoutingProtocol::SendTo, this, socket, packet, targetAddress);
 }
 
 } // namespace arpmec

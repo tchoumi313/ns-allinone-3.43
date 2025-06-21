@@ -21,6 +21,8 @@
 #include "arpmec-packet.h"
 #include "arpmec-rqueue.h"
 #include "arpmec-rtable.h"
+#include "arpmec-lqe.h"
+#include "arpmec-clustering.h"
 
 #include "ns3/ipv4-interface.h"
 #include "ns3/ipv4-l3-protocol.h"
@@ -280,6 +282,11 @@ class RoutingProtocol : public Ipv4RoutingProtocol
     /// Number of RERRs used for RERR rate control
     uint16_t m_rerrCount;
 
+    /// ARPMEC LQE module for link quality estimation
+    Ptr<ArpmecLqe> m_lqe;
+    /// ARPMEC Clustering module for cluster management
+    Ptr<ArpmecClustering> m_clustering;
+
   private:
     /// Start protocol operation
     void Start();
@@ -400,6 +407,48 @@ class RoutingProtocol : public Ipv4RoutingProtocol
      */
     /// Receive  from node with address src
     void RecvError(Ptr<Packet> p, Ipv4Address src);
+
+    /**
+     * Process ARPMEC HELLO message
+     * \param p packet containing HELLO header
+     * \param src sender address
+     */
+    void ProcessArpmecHello(Ptr<Packet> p, Ipv4Address src);
+
+    /**
+     * Process ARPMEC JOIN message
+     * \param p packet containing JOIN header
+     * \param src sender address
+     */
+    void ProcessArpmecJoin(Ptr<Packet> p, Ipv4Address src);
+
+    /**
+     * Process ARPMEC CH_NOTIFICATION message
+     * \param p packet containing CH_NOTIFICATION header
+     * \param src sender address
+     */
+    void ProcessArpmecChNotification(Ptr<Packet> p, Ipv4Address src);
+
+    /**
+     * Convert IPv4 address to node ID
+     * \param address IPv4 address to convert
+     * \return node ID
+     */
+    uint32_t GetNodeIdFromAddress(Ipv4Address address);
+
+    /**
+     * Convert node ID to IP address
+     * \param nodeId the node ID
+     * \return the IP address for this node
+     */
+    Ipv4Address GetAddressFromNodeId(uint32_t nodeId);
+
+    /**
+     * Send clustering packets (callback for clustering module)
+     * \param packet packet to send
+     * \param destination destination node ID (0 for broadcast)
+     */
+    void SendClusteringPacket(Ptr<Packet> packet, uint32_t destination);
     /** @} */
 
     /**

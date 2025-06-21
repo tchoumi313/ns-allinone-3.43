@@ -1,0 +1,361 @@
+Change Dir: '/home/donsoft/ns-allinone-3.43/ns-3.43/cmake-cache'
+
+Run Build Command(s): /usr/bin/ninja -v -j 3 arpmec-integration-test
+[0/2] /usr/bin/cmake -P /home/donsoft/ns-allinone-3.43/ns-3.43/cmake-cache/CMakeFiles/VerifyGlobs.cmake
+[1/3] /usr/bin/c++ -DHAVE_BOOST -DHAVE_BOOST_UNITS -DHAVE_GSL -DHAVE_LIBXML2 -DHAVE_PACKET_H -DHAVE_SQLITE3 -DNS3_ASSERT_ENABLE -DNS3_BUILD_PROFILE_DEBUG -DNS3_LOG_ENABLE -DPROJECT_SOURCE_PATH=\"/home/donsoft/ns-allinone-3.43/ns-3.43\" -DRAW_SOCK_CREATOR=\"/home/donsoft/ns-allinone-3.43/ns-3.43/build/src/fd-net-device/ns3.43-raw-sock-creator-default\" -DTAP_DEV_CREATOR=\"/home/donsoft/ns-allinone-3.43/ns-3.43/build/src/fd-net-device/ns3.43-tap-device-creator-default\" -D__LINUX__ -I/home/donsoft/ns-allinone-3.43/ns-3.43/build/include -I/usr -I/usr/include/freetype2 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gtk-3.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/atk-1.0 -I/usr/include/libxml2 -Os -g -DNDEBUG -std=c++20 -fPIE   -fno-semantic-interposition -fdiagnostics-color=always -Wall -Wpedantic -MD -MT examples/routing/CMakeFiles/arpmec-integration-test.dir/arpmec-integration-test.cc.o -MF examples/routing/CMakeFiles/arpmec-integration-test.dir/arpmec-integration-test.cc.o.d -o examples/routing/CMakeFiles/arpmec-integration-test.dir/arpmec-integration-test.cc.o -c /home/donsoft/ns-allinone-3.43/ns-3.43/examples/routing/arpmec-integration-test.cc
+[2/3] : && /usr/bin/c++ -Os -g -DNDEBUG  examples/routing/CMakeFiles/arpmec-integration-test.dir/arpmec-integration-test.cc.o -o /home/donsoft/ns-allinone-3.43/ns-3.43/build/examples/routing/ns3.43-arpmec-integration-test-default -L/home/donsoft/ns-allinone-3.43/ns-3.43/build/lib -Wl,-rpath,/home/donsoft/ns-allinone-3.43/ns-3.43/build/lib  -Wl,--no-as-needed  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-arpmec-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-flow-monitor-default.so  -Wl,--as-needed  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-internet-apps-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-netanim-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-wifi-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-wimax-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-lte-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-applications-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-fd-net-device-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-buildings-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-virtual-net-device-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-point-to-point-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-csma-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-config-store-default.so  /usr/lib/x86_64-linux-gnu/libxml2.so  /usr/lib/x86_64-linux-gnu/libfreetype.so  /usr/lib/x86_64-linux-gnu/libglib-2.0.so  /usr/lib/x86_64-linux-gnu/libgthread-2.0.so  /usr/lib/x86_64-linux-gnu/libgobject-2.0.so  /usr/lib/x86_64-linux-gnu/libgio-2.0.so  /usr/lib/x86_64-linux-gnu/libgdk_pixbuf-2.0.so  /usr/lib/x86_64-linux-gnu/libgdk-3.so  /usr/lib/x86_64-linux-gnu/libgtk-3.so  /usr/lib/x86_64-linux-gnu/libcairo.so  /usr/lib/x86_64-linux-gnu/libpango-1.0.so  /usr/lib/x86_64-linux-gnu/libatk-1.0.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-uan-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-energy-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-lr-wpan-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-spectrum-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-propagation-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-mobility-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-antenna-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-internet-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-bridge-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-traffic-control-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-network-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-stats-default.so  /home/donsoft/ns-allinone-3.43/ns-3.43/build/lib/libns3.43-core-default.so  -Wl,--no-as-needed  /usr/lib/x86_64-linux-gnu/libgsl.so  /usr/lib/x86_64-linux-gnu/libgslcblas.so  /usr/lib/x86_64-linux-gnu/libsqlite3.so  -Wl,--as-needed && :
+
+
+=== ARPMEC Integration Test ===
+Nodes: 20
+Distance: 40 meters
+Simulation Time: 30 seconds
+NetAnim: Enabled
+================================
+
+Verbose logging enabled for ARPMEC components.
+Creating 20 nodes in grid topology...
+  Node 0: Position (0, 0)
+  Node 1: Position (40, 0)
+  Node 2: Position (80, 0)
+  Node 3: Position (120, 0)
+  Node 4: Position (160, 0)
+  Node 5: Position (200, 0)
+  Node 6: Position (240, 0)
+  Node 7: Position (280, 0)
+  Node 8: Position (320, 0)
+  Node 9: Position (360, 0)
+  Node 10: Position (0, 40)
+  Node 11: Position (40, 40)
+  Node 12: Position (80, 40)
+  Node 13: Position (120, 40)
+  Node 14: Position (160, 40)
+  Node 15: Position (200, 40)
+  Node 16: Position (240, 40)
+  Node 17: Position (280, 40)
+  Node 18: Position (320, 40)
+  Node 19: Position (360, 40)
+Setting up WiFi devices...
+Installing ARPMEC routing protocol...
+IP Address Assignment:
+  Node 0: 10.1.1.1
+  Node 1: 10.1.1.2
+  Node 2: 10.1.1.3
+  Node 3: 10.1.1.4
+  Node 4: 10.1.1.5
+  Node 5: 10.1.1.6
+  Node 6: 10.1.1.7
+  Node 7: 10.1.1.8
+  Node 8: 10.1.1.9
+  Node 9: 10.1.1.10
+  Node 10: 10.1.1.11
+  Node 11: 10.1.1.12
+  Node 12: 10.1.1.13
+  Node 13: 10.1.1.14
+  Node 14: 10.1.1.15
+  Node 15: 10.1.1.16
+  Node 16: 10.1.1.17
+  Node 17: 10.1.1.18
+  Node 18: 10.1.1.19
+  Node 19: 10.1.1.20
+Installing test applications...
+  Traffic: Node 0 -> Node 19
+  Source start: 10s, Sink start: 5s
+Setting up NetAnim animation...
+NetAnim animation file: arpmec-integration-test.xml
+Starting ARPMEC integration test simulation...
+
+--- Network Status at 5s ---
+Packets Sent: 0
+Packets Received: 0
+LQE Status:
+  Node 0 (10.1.1.1): LQE Active
+  Node 1 (10.1.1.2): LQE Active
+  Node 2 (10.1.1.3): LQE Active
+  Node 3 (10.1.1.4): LQE Active
+  Node 4 (10.1.1.5): LQE Active
+  Node 5 (10.1.1.6): LQE Active
+  Node 6 (10.1.1.7): LQE Active
+  Node 7 (10.1.1.8): LQE Active
+  Node 8 (10.1.1.9): LQE Active
+  Node 9 (10.1.1.10): LQE Active
+  Node 10 (10.1.1.11): LQE Active
+  Node 11 (10.1.1.12): LQE Active
+  Node 12 (10.1.1.13): LQE Active
+  Node 13 (10.1.1.14): LQE Active
+  Node 14 (10.1.1.15): LQE Active
+  Node 15 (10.1.1.16): LQE Active
+  Node 16 (10.1.1.17): LQE Active
+  Node 17 (10.1.1.18): LQE Active
+  Node 18 (10.1.1.19): LQE Active
+  Node 19 (10.1.1.20): LQE Active
+Clustering Status:
+  Node 0 (10.1.1.1): Clustering Active
+  Node 1 (10.1.1.2): Clustering Active
+  Node 2 (10.1.1.3): Clustering Active
+  Node 3 (10.1.1.4): Clustering Active
+  Node 4 (10.1.1.5): Clustering Active
+  Node 5 (10.1.1.6): Clustering Active
+  Node 6 (10.1.1.7): Clustering Active
+  Node 7 (10.1.1.8): Clustering Active
+  Node 8 (10.1.1.9): Clustering Active
+  Node 9 (10.1.1.10): Clustering Active
+  Node 10 (10.1.1.11): Clustering Active
+  Node 11 (10.1.1.12): Clustering Active
+  Node 12 (10.1.1.13): Clustering Active
+  Node 13 (10.1.1.14): Clustering Active
+  Node 14 (10.1.1.15): Clustering Active
+  Node 15 (10.1.1.16): Clustering Active
+  Node 16 (10.1.1.17): Clustering Active
+  Node 17 (10.1.1.18): Clustering Active
+  Node 18 (10.1.1.19): Clustering Active
+  Node 19 (10.1.1.20): Clustering Active
+--------------------------------
+
+
+--- Network Status at 10s ---
+Packets Sent: 0
+Packets Received: 0
+LQE Status:
+  Node 0 (10.1.1.1): LQE Active
+  Node 1 (10.1.1.2): LQE Active
+  Node 2 (10.1.1.3): LQE Active
+  Node 3 (10.1.1.4): LQE Active
+  Node 4 (10.1.1.5): LQE Active
+  Node 5 (10.1.1.6): LQE Active
+  Node 6 (10.1.1.7): LQE Active
+  Node 7 (10.1.1.8): LQE Active
+  Node 8 (10.1.1.9): LQE Active
+  Node 9 (10.1.1.10): LQE Active
+  Node 10 (10.1.1.11): LQE Active
+  Node 11 (10.1.1.12): LQE Active
+  Node 12 (10.1.1.13): LQE Active
+  Node 13 (10.1.1.14): LQE Active
+  Node 14 (10.1.1.15): LQE Active
+  Node 15 (10.1.1.16): LQE Active
+  Node 16 (10.1.1.17): LQE Active
+  Node 17 (10.1.1.18): LQE Active
+  Node 18 (10.1.1.19): LQE Active
+  Node 19 (10.1.1.20): LQE Active
+Clustering Status:
+  Node 0 (10.1.1.1): Clustering Active
+  Node 1 (10.1.1.2): Clustering Active
+  Node 2 (10.1.1.3): Clustering Active
+  Node 3 (10.1.1.4): Clustering Active
+  Node 4 (10.1.1.5): Clustering Active
+  Node 5 (10.1.1.6): Clustering Active
+  Node 6 (10.1.1.7): Clustering Active
+  Node 7 (10.1.1.8): Clustering Active
+  Node 8 (10.1.1.9): Clustering Active
+  Node 9 (10.1.1.10): Clustering Active
+  Node 10 (10.1.1.11): Clustering Active
+  Node 11 (10.1.1.12): Clustering Active
+  Node 12 (10.1.1.13): Clustering Active
+  Node 13 (10.1.1.14): Clustering Active
+  Node 14 (10.1.1.15): Clustering Active
+  Node 15 (10.1.1.16): Clustering Active
+  Node 16 (10.1.1.17): Clustering Active
+  Node 17 (10.1.1.18): Clustering Active
+  Node 18 (10.1.1.19): Clustering Active
+  Node 19 (10.1.1.20): Clustering Active
+--------------------------------
+
+Packet 1 received at 12.2214s (size: 512 bytes)
+Packet 11 received at 12.468s (size: 512 bytes)
+Packet 21 received at 12.8776s (size: 512 bytes)
+Packet 31 received at 13.2872s (size: 512 bytes)
+Packet 41 received at 13.6968s (size: 512 bytes)
+Packet 51 received at 14.1064s (size: 512 bytes)
+Packet 61 received at 14.516s (size: 512 bytes)
+Packet 71 received at 14.9256s (size: 512 bytes)
+
+--- Network Status at 15s ---
+Packets Sent: 122
+Packets Received: 72
+Packet Delivery Ratio: 59.0164%
+LQE Status:
+  Node 0 (10.1.1.1): LQE Active
+  Node 1 (10.1.1.2): LQE Active
+  Node 2 (10.1.1.3): LQE Active
+  Node 3 (10.1.1.4): LQE Active
+  Node 4 (10.1.1.5): LQE Active
+  Node 5 (10.1.1.6): LQE Active
+  Node 6 (10.1.1.7): LQE Active
+  Node 7 (10.1.1.8): LQE Active
+  Node 8 (10.1.1.9): LQE Active
+  Node 9 (10.1.1.10): LQE Active
+  Node 10 (10.1.1.11): LQE Active
+  Node 11 (10.1.1.12): LQE Active
+  Node 12 (10.1.1.13): LQE Active
+  Node 13 (10.1.1.14): LQE Active
+  Node 14 (10.1.1.15): LQE Active
+  Node 15 (10.1.1.16): LQE Active
+  Node 16 (10.1.1.17): LQE Active
+  Node 17 (10.1.1.18): LQE Active
+  Node 18 (10.1.1.19): LQE Active
+  Node 19 (10.1.1.20): LQE Active
+Clustering Status:
+  Node 0 (10.1.1.1): Clustering Active
+  Node 1 (10.1.1.2): Clustering Active
+  Node 2 (10.1.1.3): Clustering Active
+  Node 3 (10.1.1.4): Clustering Active
+  Node 4 (10.1.1.5): Clustering Active
+  Node 5 (10.1.1.6): Clustering Active
+  Node 6 (10.1.1.7): Clustering Active
+  Node 7 (10.1.1.8): Clustering Active
+  Node 8 (10.1.1.9): Clustering Active
+  Node 9 (10.1.1.10): Clustering Active
+  Node 10 (10.1.1.11): Clustering Active
+  Node 11 (10.1.1.12): Clustering Active
+  Node 12 (10.1.1.13): Clustering Active
+  Node 13 (10.1.1.14): Clustering Active
+  Node 14 (10.1.1.15): Clustering Active
+  Node 15 (10.1.1.16): Clustering Active
+  Node 16 (10.1.1.17): Clustering Active
+  Node 17 (10.1.1.18): Clustering Active
+  Node 18 (10.1.1.19): Clustering Active
+  Node 19 (10.1.1.20): Clustering Active
+--------------------------------
+
+Packet 81 received at 15.3352s (size: 512 bytes)
+Packet 91 received at 15.7448s (size: 512 bytes)
+Packet 101 received at 16.1699s (size: 512 bytes)
+Packet 111 received at 16.564s (size: 512 bytes)
+Packet 121 received at 16.9736s (size: 512 bytes)
+Packet 131 received at 17.3832s (size: 512 bytes)
+Packet 141 received at 17.7932s (size: 512 bytes)
+Packet 151 received at 18.2024s (size: 512 bytes)
+Packet 161 received at 18.612s (size: 512 bytes)
+Packet 171 received at 19.0248s (size: 512 bytes)
+Packet 181 received at 19.4313s (size: 512 bytes)
+Packet 191 received at 19.8409s (size: 512 bytes)
+
+--- Network Status at 20s ---
+Packets Sent: 244
+Packets Received: 194
+Packet Delivery Ratio: 79.5082%
+LQE Status:
+  Node 0 (10.1.1.1): LQE Active
+  Node 1 (10.1.1.2): LQE Active
+  Node 2 (10.1.1.3): LQE Active
+  Node 3 (10.1.1.4): LQE Active
+  Node 4 (10.1.1.5): LQE Active
+  Node 5 (10.1.1.6): LQE Active
+  Node 6 (10.1.1.7): LQE Active
+  Node 7 (10.1.1.8): LQE Active
+  Node 8 (10.1.1.9): LQE Active
+  Node 9 (10.1.1.10): LQE Active
+  Node 10 (10.1.1.11): LQE Active
+  Node 11 (10.1.1.12): LQE Active
+  Node 12 (10.1.1.13): LQE Active
+  Node 13 (10.1.1.14): LQE Active
+  Node 14 (10.1.1.15): LQE Active
+  Node 15 (10.1.1.16): LQE Active
+  Node 16 (10.1.1.17): LQE Active
+  Node 17 (10.1.1.18): LQE Active
+  Node 18 (10.1.1.19): LQE Active
+  Node 19 (10.1.1.20): LQE Active
+Clustering Status:
+  Node 0 (10.1.1.1): Clustering Active
+  Node 1 (10.1.1.2): Clustering Active
+  Node 2 (10.1.1.3): Clustering Active
+  Node 3 (10.1.1.4): Clustering Active
+  Node 4 (10.1.1.5): Clustering Active
+  Node 5 (10.1.1.6): Clustering Active
+  Node 6 (10.1.1.7): Clustering Active
+  Node 7 (10.1.1.8): Clustering Active
+  Node 8 (10.1.1.9): Clustering Active
+  Node 9 (10.1.1.10): Clustering Active
+  Node 10 (10.1.1.11): Clustering Active
+  Node 11 (10.1.1.12): Clustering Active
+  Node 12 (10.1.1.13): Clustering Active
+  Node 13 (10.1.1.14): Clustering Active
+  Node 14 (10.1.1.15): Clustering Active
+  Node 15 (10.1.1.16): Clustering Active
+  Node 16 (10.1.1.17): Clustering Active
+  Node 17 (10.1.1.18): Clustering Active
+  Node 18 (10.1.1.19): Clustering Active
+  Node 19 (10.1.1.20): Clustering Active
+--------------------------------
+
+Packet 201 received at 20.2505s (size: 512 bytes)
+Packet 211 received at 20.6601s (size: 512 bytes)
+Packet 221 received at 21.0697s (size: 512 bytes)
+Packet 231 received at 21.4793s (size: 512 bytes)
+Packet 241 received at 21.8889s (size: 512 bytes)
+Packet 251 received at 22.2985s (size: 512 bytes)
+Packet 261 received at 22.7081s (size: 512 bytes)
+Packet 271 received at 23.1177s (size: 512 bytes)
+Packet 281 received at 23.5273s (size: 512 bytes)
+Packet 291 received at 23.9369s (size: 512 bytes)
+Packet 301 received at 24.3465s (size: 512 bytes)
+Packet 311 received at 24.7561s (size: 512 bytes)
+
+--- Network Status at 25s ---
+Packets Sent: 366
+Packets Received: 316
+Packet Delivery Ratio: 86.3388%
+LQE Status:
+  Node 0 (10.1.1.1): LQE Active
+  Node 1 (10.1.1.2): LQE Active
+  Node 2 (10.1.1.3): LQE Active
+  Node 3 (10.1.1.4): LQE Active
+  Node 4 (10.1.1.5): LQE Active
+  Node 5 (10.1.1.6): LQE Active
+  Node 6 (10.1.1.7): LQE Active
+  Node 7 (10.1.1.8): LQE Active
+  Node 8 (10.1.1.9): LQE Active
+  Node 9 (10.1.1.10): LQE Active
+  Node 10 (10.1.1.11): LQE Active
+  Node 11 (10.1.1.12): LQE Active
+  Node 12 (10.1.1.13): LQE Active
+  Node 13 (10.1.1.14): LQE Active
+  Node 14 (10.1.1.15): LQE Active
+  Node 15 (10.1.1.16): LQE Active
+  Node 16 (10.1.1.17): LQE Active
+  Node 17 (10.1.1.18): LQE Active
+  Node 18 (10.1.1.19): LQE Active
+  Node 19 (10.1.1.20): LQE Active
+Clustering Status:
+  Node 0 (10.1.1.1): Clustering Active
+  Node 1 (10.1.1.2): Clustering Active
+  Node 2 (10.1.1.3): Clustering Active
+  Node 3 (10.1.1.4): Clustering Active
+  Node 4 (10.1.1.5): Clustering Active
+  Node 5 (10.1.1.6): Clustering Active
+  Node 6 (10.1.1.7): Clustering Active
+  Node 7 (10.1.1.8): Clustering Active
+  Node 8 (10.1.1.9): Clustering Active
+  Node 9 (10.1.1.10): Clustering Active
+  Node 10 (10.1.1.11): Clustering Active
+  Node 11 (10.1.1.12): Clustering Active
+  Node 12 (10.1.1.13): Clustering Active
+  Node 13 (10.1.1.14): Clustering Active
+  Node 14 (10.1.1.15): Clustering Active
+  Node 15 (10.1.1.16): Clustering Active
+  Node 16 (10.1.1.17): Clustering Active
+  Node 17 (10.1.1.18): Clustering Active
+  Node 18 (10.1.1.19): Clustering Active
+  Node 19 (10.1.1.20): Clustering Active
+--------------------------------
+
+
+Simulation completed!
+
+=== ARPMEC Integration Test Results ===
+Total Packets Sent: 366
+Total Packets Received: 318
+Packet Delivery Ratio: 86.8852%
+✅ EXCELLENT: High packet delivery indicates ARPMEC is working well!
+
+=== Component Status ===
+✅ LQE Module: Integrated and active
+✅ Clustering Module: Integrated and active
+✅ Message Processing: HELLO, JOIN, CH_NOTIFICATION handlers implemented
+✅ Integration: LQE feeds clustering, clustering affects routing
+
+ARPMEC Integration Test Completed Successfully!
+=======================================
+Finished executing the following commands:
+/usr/bin/cmake --build /home/donsoft/ns-allinone-3.43/ns-3.43/cmake-cache -j 3 --target arpmec-integration-test
+cd .; export PATH=$PATH:/home/donsoft/ns-allinone-3.43/ns-3.43/build/lib PYTHONPATH=/home/donsoft/ns-allinone-3.43/ns-3.43/build/bindings/python LD_LIBRARY_PATH=/home/donsoft/ns-allinone-3.43/ns-3.43/build/lib ; /home/donsoft/ns-allinone-3.43/ns-3.43/build/examples/routing/ns3.43-arpmec-integration-test-default

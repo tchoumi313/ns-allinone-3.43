@@ -2,6 +2,7 @@ build_lib(
   LIBNAME arpmec
   SOURCE_FILES
     helper/arpmec-helper.cc
+    model/arpmec-clustering.cc
     model/arpmec-dpd.cc
     model/arpmec-id-cache.cc
     model/arpmec-lqe.cc
@@ -12,6 +13,7 @@ build_lib(
     model/arpmec-rtable.cc
   HEADER_FILES
     helper/arpmec-helper.h
+    model/arpmec-clustering.h
     model/arpmec-dpd.h
     model/arpmec-id-cache.h
     model/arpmec-lqe.h
@@ -26,6 +28,7 @@ build_lib(
     ${libwifi}
     ${libnetanim}
   TEST_SOURCES
+    test/arpmec-clustering-test-suite.cc
     test/arpmec-id-cache-test-suite.cc
     test/arpmec-lqe-test-suite.cc
     test/arpmec-regression.cc

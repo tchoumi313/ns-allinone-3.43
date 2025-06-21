@@ -132,3 +132,15 @@ build_example(
     ${libapplications}
     ${libinternet}
 )
+
+build_example(
+  NAME arpmec-integration-test
+  SOURCE_FILES arpmec-integration-test.cc
+  LIBRARIES_TO_LINK
+    ${libwifi}
+    ${libarpmec}
+    ${libinternet}
+    ${libapplications}
+    ${libflow-monitor}
+    ${libmobility}
+)
