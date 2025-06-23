@@ -2,6 +2,7 @@ build_lib(
   LIBNAME arpmec
   SOURCE_FILES
     helper/arpmec-helper.cc
+    model/arpmec-adaptive-routing.cc
     model/arpmec-clustering.cc
     model/arpmec-dpd.cc
     model/arpmec-id-cache.cc
@@ -13,6 +14,7 @@ build_lib(
     model/arpmec-rtable.cc
   HEADER_FILES
     helper/arpmec-helper.h
+    model/arpmec-adaptive-routing.h
     model/arpmec-clustering.h
     model/arpmec-dpd.h
     model/arpmec-id-cache.h

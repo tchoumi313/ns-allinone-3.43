@@ -174,6 +174,7 @@ RoutingProtocol::RoutingProtocol()
     // Initialize ARPMEC modules
     m_lqe = CreateObject<ArpmecLqe>();
     m_clustering = CreateObject<ArpmecClustering>();
+    m_adaptiveRouting = CreateObject<ArpmecAdaptiveRouting>();
 }
 
 TypeId
@@ -329,7 +330,31 @@ RoutingProtocol::GetTypeId()
                           "Access to the underlying UniformRandomVariable",
                           StringValue("ns3::UniformRandomVariable"),
                           MakePointerAccessor(&RoutingProtocol::m_uniformRandomVariable),
-                          MakePointerChecker<UniformRandomVariable>());
+                          MakePointerChecker<UniformRandomVariable>())
+            .AddTraceSource("Tx",
+                          "A packet is transmitted by the routing protocol",
+                          MakeTraceSourceAccessor(&RoutingProtocol::m_txTrace),
+                          "ns3::Packet::TwoAddressTracedCallback")
+            .AddTraceSource("Rx", 
+                          "A packet is received by the routing protocol",
+                          MakeTraceSourceAccessor(&RoutingProtocol::m_rxTrace),
+                          "ns3::Packet::AddressTracedCallback")
+            .AddTraceSource("ClusterHead",
+                          "Cluster head status change",
+                          MakeTraceSourceAccessor(&RoutingProtocol::m_clusterHeadTrace),
+                          "ns3::arpmec::RoutingProtocol::ClusterHeadTracedCallback")
+            .AddTraceSource("RouteDecision",
+                          "Adaptive routing decision made",
+                          MakeTraceSourceAccessor(&RoutingProtocol::m_routeDecisionTrace),
+                          "ns3::arpmec::RoutingProtocol::RouteDecisionTracedCallback") 
+            .AddTraceSource("LqeUpdate",
+                          "LQE value updated",
+                          MakeTraceSourceAccessor(&RoutingProtocol::m_lqeUpdateTrace),
+                          "ns3::arpmec::RoutingProtocol::LqeUpdateTracedCallback")
+            .AddTraceSource("EnergyUpdate",
+                          "Energy level updated", 
+                          MakeTraceSourceAccessor(&RoutingProtocol::m_energyUpdateTrace),
+                          "ns3::arpmec::RoutingProtocol::EnergyUpdateTracedCallback");
     return tid;
 }
 
@@ -449,12 +474,60 @@ RoutingProtocol::RouteOutput(Ptr<Packet> p,
         return route;
     }
 
-    // Valid route not found, in this case we return loopback.
-    // Actual route request will be deferred until packet will be fully formed,
-    // routed to loopback, received from loopback and passed to RouteInput (see below)
+    // Valid route not found, in this case we check ARPMEC adaptive routing
+    // before falling back to traditional AODV route discovery
+    uint32_t destinationNodeId = GetNodeIdFromAddress(dst);
+    
+    // Use Algorithm 3 - Adaptive Routing to determine best route
+    if (m_adaptiveRouting)
+    {
+        ArpmecAdaptiveRouting::RoutingInfo routeInfo = m_adaptiveRouting->DetermineRoute(dst, destinationNodeId);
+        
+        NS_LOG_DEBUG("Adaptive routing decision: " << routeInfo.decision << 
+                     " for destination " << dst << " (node " << destinationNodeId << ")");
+        
+        // Check if we have a specific routing recommendation
+        if (routeInfo.decision == ArpmecAdaptiveRouting::INTRA_CLUSTER)
+        {
+            NS_LOG_DEBUG("Using intra-cluster routing to " << dst);
+            // For intra-cluster routing, try to find direct route or via cluster head
+            if (routeInfo.nextHop != 0)
+            {
+                // Try to get route to next hop
+                Ipv4Address nextHopAddr = GetAddressFromNodeId(routeInfo.nextHop);
+                RoutingTableEntry nextHopRt;
+                if (m_routingTable.LookupValidRoute(nextHopAddr, nextHopRt))
+                {
+                    // Create route via next hop
+                    route = nextHopRt.GetRoute();
+                    UpdateRouteLifeTime(nextHopAddr, m_activeRouteTimeout);
+                    return route;
+                }
+            }
+        }
+        else if (routeInfo.decision == ArpmecAdaptiveRouting::INTER_CLUSTER)
+        {
+            NS_LOG_DEBUG("Using inter-cluster routing to " << dst << " via gateway " << routeInfo.gateway);
+            // For inter-cluster routing, route via cluster head or gateway
+            if (routeInfo.nextHop != 0)
+            {
+                Ipv4Address nextHopAddr = GetAddressFromNodeId(routeInfo.nextHop);
+                RoutingTableEntry nextHopRt;
+                if (m_routingTable.LookupValidRoute(nextHopAddr, nextHopRt))
+                {
+                    route = nextHopRt.GetRoute();
+                    UpdateRouteLifeTime(nextHopAddr, m_activeRouteTimeout);
+                    return route;
+                }
+            }
+        }
+        // For AODV_FALLBACK, continue with standard AODV below
+    }
+    
+    // If adaptive routing didn't provide a route, fall back to standard AODV behavior
     uint32_t iif = (oif ? m_ipv4->GetInterfaceForDevice(oif) : -1);
     DeferredRouteOutputTag tag(iif);
-    NS_LOG_DEBUG("Valid Route not found");
+    NS_LOG_DEBUG("Valid Route not found, using AODV fallback for " << dst);
     if (!p->PeekPacketTag(tag))
     {
         p->AddPacketTag(tag);
@@ -723,6 +796,12 @@ RoutingProtocol::SetIpv4(Ptr<Ipv4> ipv4)
     // Initialize ARPMEC clustering module with node ID
     uint32_t nodeId = m_ipv4->GetObject<Node>()->GetId();
     m_clustering->Initialize(nodeId, m_lqe);
+    
+    // Initialize ARPMEC adaptive routing module
+    m_adaptiveRouting->Initialize(nodeId, m_clustering, m_lqe);
+    
+    // Set up routing metrics callback to fire routing decision traces
+    m_adaptiveRouting->SetRoutingMetricsCallback(MakeCallback(&RoutingProtocol::OnRoutingDecision, this));
     
     // Set up clustering packet send callback
     m_clustering->SetSendPacketCallback(MakeCallback(&RoutingProtocol::SendClusteringPacket, this));
@@ -1175,6 +1254,20 @@ RoutingProtocol::SendRequest(Ipv4Address dst)
 void
 RoutingProtocol::SendTo(Ptr<Socket> socket, Ptr<Packet> packet, Ipv4Address destination)
 {
+    // Fire trace for packet transmission
+    Ipv4InterfaceAddress iface;
+    for (auto& entry : m_socketAddresses)
+    {
+        if (entry.first == socket)
+        {
+            iface = entry.second;
+            break;
+        }
+    }
+    
+    TraceTx(packet, InetSocketAddress(iface.GetLocal(), ARPMEC_PORT), 
+           InetSocketAddress(destination, ARPMEC_PORT));
+    
     socket->SendTo(packet, 0, InetSocketAddress(destination, ARPMEC_PORT));
 }
 
@@ -1217,6 +1310,9 @@ RoutingProtocol::RecvArpmec(Ptr<Socket> socket)
     InetSocketAddress inetSourceAddr = InetSocketAddress::ConvertFrom(sourceAddress);
     Ipv4Address sender = inetSourceAddr.GetIpv4();
     Ipv4Address receiver;
+
+    // Fire trace for packet reception
+    TraceRx(packet, sourceAddress);
 
     if (m_socketAddresses.find(socket) != m_socketAddresses.end())
     {
@@ -2323,6 +2419,16 @@ void
 RoutingProtocol::DoInitialize()
 {
     NS_LOG_FUNCTION(this);
+    
+    // Set up callbacks for ARPMEC modules
+    if (m_clustering)
+    {
+        // Set cluster event callback to fire traces
+        m_clustering->SetClusterEventCallback(MakeCallback(&RoutingProtocol::OnClusterEvent, this));
+        // Set packet send callback
+        m_clustering->SetSendPacketCallback(MakeCallback(&RoutingProtocol::OnClusterPacketSend, this));
+    }
+    
     uint32_t startTime;
     if (m_enableHello)
     {
@@ -2354,11 +2460,16 @@ RoutingProtocol::ProcessArpmecHello(Ptr<Packet> p, Ipv4Address src)
     // Update LQE with received HELLO information
     m_lqe->UpdateLinkQuality(senderId, rssi, pdr, timestamp, receivedTime);
     
+    // Fire LQE trace for this neighbor
+    uint32_t localNodeId = m_ipv4->GetObject<Node>()->GetId();
+    double linkScore = m_lqe->PredictLinkScore(senderId);
+    TraceLqeUpdate(localNodeId, linkScore);
+    
     // Pass HELLO to clustering module
     m_clustering->ProcessHelloMessage(senderId, helloHeader);
     
     NS_LOG_DEBUG("Processed ARPMEC_HELLO from node " << senderId << 
-                 " (RSSI: " << rssi << ", PDR: " << pdr << ")");
+                 " (RSSI: " << rssi << ", PDR: " << pdr << ", Link Score: " << linkScore << ")");
 }
 
 void
@@ -2389,6 +2500,13 @@ RoutingProtocol::ProcessArpmecChNotification(Ptr<Packet> p, Ipv4Address src)
     
     // Pass CH_NOTIFICATION to clustering module
     m_clustering->ProcessChNotificationMessage(senderId, chHeader);
+    
+    // Update adaptive routing topology with cluster information
+    if (m_adaptiveRouting)
+    {
+        const std::vector<uint32_t>& members = chHeader.GetClusterMembers();
+        m_adaptiveRouting->UpdateClusterTopology(senderId, members);
+    }
     
     NS_LOG_DEBUG("Processed ARPMEC_CH_NOTIFICATION from node " << senderId);
 }
@@ -2455,6 +2573,145 @@ RoutingProtocol::SendClusteringPacket(Ptr<Packet> packet, uint32_t destination)
     // Add some jitter to avoid collisions
     Time jitter = Time(MilliSeconds(m_uniformRandomVariable->GetInteger(0, 5)));
     Simulator::Schedule(jitter, &RoutingProtocol::SendTo, this, socket, packet, targetAddress);
+}
+
+std::map<ArpmecAdaptiveRouting::RouteDecision, uint32_t>
+RoutingProtocol::GetAdaptiveRoutingStats() const
+{
+    if (m_adaptiveRouting)
+    {
+        return m_adaptiveRouting->GetRoutingStatistics();
+    }
+    return std::map<ArpmecAdaptiveRouting::RouteDecision, uint32_t>();
+}
+
+void
+RoutingProtocol::TraceTx(Ptr<const Packet> packet, const Address& from, const Address& to)
+{
+    NS_LOG_FUNCTION(this << packet << from << to);
+    m_txTrace(packet, from, to);
+}
+
+void
+RoutingProtocol::TraceRx(Ptr<const Packet> packet, const Address& from)
+{
+    NS_LOG_FUNCTION(this << packet << from);
+    m_rxTrace(packet, from);
+}
+
+void
+RoutingProtocol::TraceClusterHead(uint32_t nodeId, bool isClusterHead)
+{
+    NS_LOG_FUNCTION(this << nodeId << isClusterHead);
+    m_clusterHeadTrace(nodeId, isClusterHead);
+}
+
+void
+RoutingProtocol::TraceRouteDecision(uint32_t nodeId, const std::string& decision)
+{
+    NS_LOG_FUNCTION(this << nodeId << decision);
+    m_routeDecisionTrace(nodeId, decision);
+}
+
+void
+RoutingProtocol::TraceLqeUpdate(uint32_t nodeId, double lqeValue)
+{
+    NS_LOG_FUNCTION(this << nodeId << lqeValue);
+    m_lqeUpdateTrace(nodeId, lqeValue);
+}
+
+void
+RoutingProtocol::TraceEnergyUpdate(uint32_t nodeId, double energyLevel)
+{
+    NS_LOG_FUNCTION(this << nodeId << energyLevel);
+    m_energyUpdateTrace(nodeId, energyLevel);
+}
+
+void
+RoutingProtocol::OnClusterEvent(ArpmecClustering::ClusterEvent event, uint32_t nodeId)
+{
+    NS_LOG_FUNCTION(this << event << nodeId);
+    
+    // Get our own node ID for traces
+    uint32_t localNodeId = m_ipv4->GetObject<Node>()->GetId();
+    
+    // Only fire traces for our own node's events
+    if (nodeId == localNodeId)
+    {
+        // Fire appropriate traces based on cluster event
+        switch (event)
+        {
+            case ArpmecClustering::CH_ELECTED:
+                TraceClusterHead(localNodeId, true);
+                NS_LOG_INFO("Node " << localNodeId << " became cluster head");
+                break;
+            case ArpmecClustering::JOINED_CLUSTER:
+                TraceClusterHead(localNodeId, false);
+                NS_LOG_INFO("Node " << localNodeId << " joined cluster");
+                break;
+            case ArpmecClustering::LEFT_CLUSTER:
+                TraceClusterHead(localNodeId, false);
+                NS_LOG_INFO("Node " << localNodeId << " left cluster");
+                break;
+            case ArpmecClustering::CH_CHANGED:
+                // This could be either becoming or losing CH status
+                // Need more specific information to handle properly
+                NS_LOG_INFO("Node " << localNodeId << " cluster head status changed");
+                break;
+        }
+        
+        // Fire energy trace when cluster events occur
+        if (m_clustering)
+        {
+            double energyLevel = m_clustering->GetEnergyLevel();
+            TraceEnergyUpdate(localNodeId, energyLevel);
+        }
+    }
+}
+
+void
+RoutingProtocol::OnClusterPacketSend(Ptr<Packet> packet, uint32_t destination)
+{
+    NS_LOG_FUNCTION(this << packet << destination);
+    
+    // Use the existing SendClusteringPacket method
+    SendClusteringPacket(packet, destination);
+}
+
+void
+RoutingProtocol::OnRoutingDecision(ArpmecAdaptiveRouting::RouteDecision decision, double quality)
+{
+    NS_LOG_FUNCTION(this << decision << quality);
+    
+    // Get our own node ID for traces
+    uint32_t localNodeId = m_ipv4->GetObject<Node>()->GetId();
+    
+    // Convert RouteDecision enum to string for trace
+    std::string decisionStr;
+    switch (decision)
+    {
+        case ArpmecAdaptiveRouting::INTRA_CLUSTER:
+            decisionStr = "INTRA_CLUSTER";
+            break;
+        case ArpmecAdaptiveRouting::INTER_CLUSTER:
+            decisionStr = "INTER_CLUSTER";
+            break;
+        case ArpmecAdaptiveRouting::GATEWAY_ROUTE:
+            decisionStr = "GATEWAY_ROUTE";
+            break;
+        case ArpmecAdaptiveRouting::AODV_FALLBACK:
+            decisionStr = "AODV_FALLBACK";
+            break;
+        default:
+            decisionStr = "UNKNOWN";
+            break;
+    }
+    
+    // Fire routing decision trace
+    TraceRouteDecision(localNodeId, decisionStr);
+    
+    NS_LOG_INFO("Node " << localNodeId << " routing decision: " << decisionStr << 
+                " quality: " << quality);
 }
 
 } // namespace arpmec

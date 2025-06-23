@@ -23,6 +23,7 @@
 #include "arpmec-rtable.h"
 #include "arpmec-lqe.h"
 #include "arpmec-clustering.h"
+#include "arpmec-adaptive-routing.h"
 
 #include "ns3/ipv4-interface.h"
 #include "ns3/ipv4-l3-protocol.h"
@@ -30,6 +31,7 @@
 #include "ns3/node.h"
 #include "ns3/output-stream-wrapper.h"
 #include "ns3/random-variable-stream.h"
+#include "ns3/traced-callback.h"
 
 #include <map>
 
@@ -41,6 +43,15 @@ enum WifiMacDropReason : uint8_t; // opaque enum declaration
 
 namespace arpmec
 {
+
+/**
+ * \brief ARPMEC TracedCallback typedefs
+ */
+typedef TracedCallback<uint32_t, bool> ClusterHeadTracedCallback;
+typedef TracedCallback<uint32_t, std::string> RouteDecisionTracedCallback;
+typedef TracedCallback<uint32_t, double> LqeUpdateTracedCallback;
+typedef TracedCallback<uint32_t, double> EnergyUpdateTracedCallback;
+
 /**
  * \ingroup arpmec
  *
@@ -194,6 +205,64 @@ class RoutingProtocol : public Ipv4RoutingProtocol
      */
     int64_t AssignStreams(int64_t stream);
 
+    /**
+     * Get adaptive routing statistics
+     * \returns map of routing decision types to usage counts
+     */
+    std::map<ArpmecAdaptiveRouting::RouteDecision, uint32_t> GetAdaptiveRoutingStats() const;
+
+    /**
+     * Get clustering module
+     * \returns pointer to the clustering component
+     */
+    Ptr<ArpmecClustering> GetClustering() const
+    {
+        return m_clustering;
+    }
+
+    /**
+     * \brief Trace packet transmission
+     * \param packet the transmitted packet
+     * \param from source address
+     * \param to destination address
+     */
+    void TraceTx(Ptr<const Packet> packet, const Address& from, const Address& to);
+
+    /**
+     * \brief Trace packet reception
+     * \param packet the received packet
+     * \param from source address
+     */
+    void TraceRx(Ptr<const Packet> packet, const Address& from);
+
+    /**
+     * \brief Trace cluster head status change
+     * \param nodeId the node ID
+     * \param isClusterHead true if node becomes cluster head
+     */
+    void TraceClusterHead(uint32_t nodeId, bool isClusterHead);
+
+    /**
+     * \brief Trace adaptive routing decision
+     * \param nodeId the node ID making the decision
+     * \param decision the routing decision as string
+     */
+    void TraceRouteDecision(uint32_t nodeId, const std::string& decision);
+
+    /**
+     * \brief Trace LQE update
+     * \param nodeId the node ID
+     * \param lqeValue the updated LQE value
+     */
+    void TraceLqeUpdate(uint32_t nodeId, double lqeValue);
+
+    /**
+     * \brief Trace energy update
+     * \param nodeId the node ID
+     * \param energyLevel the updated energy level
+     */
+    void TraceEnergyUpdate(uint32_t nodeId, double energyLevel);
+
   protected:
     void DoInitialize() override;
 
@@ -286,6 +355,8 @@ class RoutingProtocol : public Ipv4RoutingProtocol
     Ptr<ArpmecLqe> m_lqe;
     /// ARPMEC Clustering module for cluster management
     Ptr<ArpmecClustering> m_clustering;
+    /// ARPMEC Adaptive Routing module for Algorithm 3 implementation
+    Ptr<ArpmecAdaptiveRouting> m_adaptiveRouting;
 
   private:
     /// Start protocol operation
@@ -444,6 +515,32 @@ class RoutingProtocol : public Ipv4RoutingProtocol
     Ipv4Address GetAddressFromNodeId(uint32_t nodeId);
 
     /**
+     * \name Callback methods for ARPMEC modules
+     * @{
+     */
+    /**
+     * Handle cluster events from clustering module
+     * \param event the cluster event
+     * \param nodeId the node ID involved in the event
+     */
+    void OnClusterEvent(ArpmecClustering::ClusterEvent event, uint32_t nodeId);
+
+    /**
+     * Handle routing decision from adaptive routing module
+     * \param decision the routing decision made
+     * \param quality the route quality score
+     */
+    void OnRoutingDecision(ArpmecAdaptiveRouting::RouteDecision decision, double quality);
+
+    /**
+     * Handle packet send requests from clustering module
+     * \param packet the packet to send
+     * \param destination the destination node ID (0 for broadcast)
+     */
+    void OnClusterPacketSend(Ptr<Packet> packet, uint32_t destination);
+    /** @} */
+
+    /**
      * Send clustering packets (callback for clustering module)
      * \param packet packet to send
      * \param destination destination node ID (0 for broadcast)
@@ -541,6 +638,20 @@ class RoutingProtocol : public Ipv4RoutingProtocol
     Ptr<UniformRandomVariable> m_uniformRandomVariable;
     /// Keep track of the last bcast time
     Time m_lastBcastTime;
+
+    /// ARPMEC Trace Sources for validation and monitoring
+    /// Trace fired when a packet is transmitted
+    TracedCallback<Ptr<const Packet>, const Address&, const Address&> m_txTrace;
+    /// Trace fired when a packet is received
+    TracedCallback<Ptr<const Packet>, const Address&> m_rxTrace;
+    /// Trace fired when cluster head status changes
+    TracedCallback<uint32_t, bool> m_clusterHeadTrace;
+    /// Trace fired when adaptive routing decision is made
+    TracedCallback<uint32_t, std::string> m_routeDecisionTrace;
+    /// Trace fired when LQE value is updated
+    TracedCallback<uint32_t, double> m_lqeUpdateTrace;
+    /// Trace fired when energy level is updated
+    TracedCallback<uint32_t, double> m_energyUpdateTrace;
 };
 
 } // namespace arpmec

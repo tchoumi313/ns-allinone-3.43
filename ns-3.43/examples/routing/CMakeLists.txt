@@ -144,3 +144,38 @@ build_example(
     ${libflow-monitor}
     ${libmobility}
 )
+
+build_example(
+  NAME arpmec-quick-test
+  SOURCE_FILES arpmec-quick-test.cc
+  LIBRARIES_TO_LINK
+    ${libwifi}
+    ${libarpmec}
+    ${libinternet}
+    ${libapplications}
+    ${libmobility}
+)
+
+build_example(
+  NAME arpmec-validation-test
+  SOURCE_FILES arpmec-validation-test.cc
+  LIBRARIES_TO_LINK
+    ${libwifi}
+    ${libarpmec}
+    ${libinternet}
+    ${libapplications}
+    ${libmobility}
+    ${libenergy}
+    ${libnetanim}
+)
+
+build_example(
+  NAME arpmec-algorithm-test
+  SOURCE_FILES arpmec-algorithm-test.cc
+  LIBRARIES_TO_LINK
+    ${libwifi}
+    ${libarpmec}
+    ${libinternet}
+    ${libapplications}
+    ${libmobility}
+)

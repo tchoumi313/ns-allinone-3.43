@@ -217,6 +217,12 @@ private:
     uint32_t SelectBestClusterHead();
 
     /**
+     * \brief Count nearby cluster heads based on link quality
+     * \return Number of nearby cluster heads
+     */
+    uint32_t CountNearbyClusterHeads();
+
+    /**
      * \brief Become a cluster head
      */
     void BecomeClusterHead();
@@ -290,7 +296,7 @@ private:
     Callback<void, Ptr<Packet>, uint32_t> m_sendPacketCallback;     ///< Packet send callback
 
     // ARPMEC clustering parameters from the paper
-    static constexpr double DEFAULT_ENERGY_THRESHOLD = 0.7;     ///< Default energy threshold
+    static constexpr double DEFAULT_ENERGY_THRESHOLD = 0.7;     ///< Default energy threshold for CH election
     static constexpr double CLUSTER_HEAD_BONUS = 0.1;           ///< Bonus for being CH candidate
     static const Time DEFAULT_CLUSTERING_INTERVAL;              ///< Default clustering interval
     static const Time DEFAULT_MEMBER_TIMEOUT;                   ///< Default member timeout
