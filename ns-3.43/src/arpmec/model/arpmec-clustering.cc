@@ -332,11 +332,11 @@ ArpmecClustering::ExecuteClusteringAlgorithm()
 
     if (!m_isRunning || !m_lqe)
     {
-        NS_LOG_DEBUG("Clustering algorithm skipped - not running or LQE unavailable");
+        std::cout << "Node " << m_nodeId << " - Clustering algorithm skipped - not running or LQE unavailable at " << Simulator::Now().GetSeconds() << "s" << std::endl;
         return;
     }
 
-    NS_LOG_DEBUG("Executing clustering algorithm for node " << m_nodeId);
+    std::cout << "Node " << m_nodeId << " - Executing clustering algorithm at " << Simulator::Now().GetSeconds() << "s" << std::endl;
 
     // Algorithm 2 from ARPMEC paper
     // Lines 7-15: Clustering algorithm
@@ -346,6 +346,7 @@ ArpmecClustering::ExecuteClusteringAlgorithm()
         // Node has enough energy and good link quality - become CH
         if (m_nodeState != CLUSTER_HEAD)
         {
+            std::cout << "Node " << m_nodeId << " - Decision: BECOME CLUSTER HEAD at " << Simulator::Now().GetSeconds() << "s" << std::endl;
             BecomeClusterHead();
         }
     }
@@ -359,6 +360,7 @@ ArpmecClustering::ExecuteClusteringAlgorithm()
             // Join the best cluster
             if (m_nodeState != CLUSTER_MEMBER || m_currentCluster.headId != bestCh)
             {
+                NS_LOG_INFO("Node " << m_nodeId << " - Decision: JOIN CLUSTER " << bestCh);
                 JoinCluster(bestCh);
             }
         }
@@ -367,12 +369,13 @@ ArpmecClustering::ExecuteClusteringAlgorithm()
             // No suitable cluster head found - only become CH if we're designated by the deterministic algorithm
             if (ShouldBecomeClusterHead())
             {
+                NS_LOG_INFO("Node " << m_nodeId << " - Decision: BECOME CLUSTER HEAD (no suitable CH found)");
                 BecomeClusterHead();
             }
             else
             {
                 m_nodeState = ISOLATED;
-                NS_LOG_DEBUG("Node " << m_nodeId << " - remaining isolated (no suitable CH and not designated as CH)");
+                NS_LOG_INFO("Node " << m_nodeId << " - Decision: REMAIN ISOLATED");
             }
         }
     }
@@ -391,29 +394,31 @@ ArpmecClustering::ShouldBecomeClusterHead()
 
     // EXACT ARPMEC Paper Algorithm 2 Implementation
     // Following the paper's algorithm step by step with proper debugging
-    
+
     // Step 1: Energy threshold check (Paper Algorithm 2, line 3)
     if (m_energyLevel < 0.7) // Paper uses 0.7 as energy threshold
     {
-        NS_LOG_DEBUG("Node " << m_nodeId << " - Energy too low: " << m_energyLevel << " < 0.7");
+        NS_LOG_INFO("Node " << m_nodeId << " - Energy too low: " << m_energyLevel << " < 0.7");
         return false;
     }
 
     if (!m_lqe)
     {
-        NS_LOG_DEBUG("Node " << m_nodeId << " - LQE not available");
+        NS_LOG_INFO("Node " << m_nodeId << " - LQE not available");
         return false;
     }
 
     // Step 2: Get neighbors and calculate average link quality (Paper Algorithm 2, line 4-5)
     std::vector<uint32_t> neighbors = m_lqe->GetNeighborsByQuality();
-    
+
+    std::cout << "Node " << m_nodeId << " - Found " << neighbors.size() << " neighbors at " << Simulator::Now().GetSeconds() << "s" << std::endl;
+
     // Handle isolated nodes
     if (neighbors.empty())
     {
         Time elapsed = Simulator::Now() - m_startTime;
         bool becomeIsolatedCH = (elapsed > Seconds(3.0));
-        NS_LOG_INFO("Node " << m_nodeId << " - Isolated node, elapsed: " 
+        NS_LOG_INFO("Node " << m_nodeId << " - Isolated node, elapsed: "
                      << elapsed.GetSeconds() << "s, decision: " << becomeIsolatedCH);
         return becomeIsolatedCH;
     }
@@ -421,7 +426,7 @@ ArpmecClustering::ShouldBecomeClusterHead()
     // Calculate average link quality (Paper Algorithm 2, line 6)
     double totalQuality = 0.0;
     uint32_t validNeighbors = 0;
-    
+
     for (uint32_t neighbor : neighbors)
     {
         double quality = m_lqe->PredictLinkScore(neighbor);
@@ -431,13 +436,13 @@ ArpmecClustering::ShouldBecomeClusterHead()
             validNeighbors++;
         }
     }
-    
+
     if (validNeighbors == 0)
     {
         NS_LOG_DEBUG("Node " << m_nodeId << " - No valid neighbors");
         return false;
     }
-    
+
     double avgLinkQuality = totalQuality / validNeighbors;
 
     // Step 3: Link quality threshold check (Paper Algorithm 2, line 7)
@@ -449,29 +454,29 @@ ArpmecClustering::ShouldBecomeClusterHead()
 
     // Step 4: Check for nearby cluster heads (Paper Algorithm 2, line 8-9)
     uint32_t nearbyClusterHeads = CountNearbyClusterHeads();
-    
+
     // Step 5: Final decision (Paper Algorithm 2, line 10-12)
     bool shouldBecomeCH = false;
-    
+
     if (nearbyClusterHeads == 0)
     {
         shouldBecomeCH = true; // No nearby CHs - must become CH
-        NS_LOG_INFO("Node " << m_nodeId << " - No nearby CHs, becoming CH (energy=" 
+        NS_LOG_INFO("Node " << m_nodeId << " - No nearby CHs, becoming CH (energy="
                     << m_energyLevel << ", avgLQ=" << avgLinkQuality << ", neighbors=" << validNeighbors << ")");
     }
     else if (validNeighbors > 6 && nearbyClusterHeads <= 1)
     {
         shouldBecomeCH = true; // Dense area with only one CH
-        NS_LOG_INFO("Node " << m_nodeId << " - Dense area (" << validNeighbors 
+        NS_LOG_INFO("Node " << m_nodeId << " - Dense area (" << validNeighbors
                      << " neighbors), adding CH (nearby CHs: " << nearbyClusterHeads << ")");
     }
     else
     {
         shouldBecomeCH = false; // Join existing cluster
-        NS_LOG_DEBUG("Node " << m_nodeId << " - " << nearbyClusterHeads 
+        NS_LOG_DEBUG("Node " << m_nodeId << " - " << nearbyClusterHeads
                      << " nearby CHs, joining cluster (neighbors=" << validNeighbors << ")");
     }
-    
+
     return shouldBecomeCH;
 }
 
@@ -546,10 +551,18 @@ ArpmecClustering::CountNearbyClusterHeads()
     {
         return 0;
     }
-    
+
+    // During early simulation phase, return 0 to allow initial CH formation
+    Time elapsed = Simulator::Now() - m_startTime;
+    if (elapsed < Seconds(10.0))
+    {
+        NS_LOG_DEBUG("Node " << m_nodeId << " - Early phase, returning 0 nearby CHs to allow formation");
+        return 0;
+    }
+
     uint32_t count = 0;
     std::vector<uint32_t> neighbors = m_lqe->GetNeighborsByQuality();
-    
+
     for (uint32_t neighbor : neighbors)
     {
         double linkQuality = m_lqe->PredictLinkScore(neighbor);
@@ -560,7 +573,7 @@ ArpmecClustering::CountNearbyClusterHeads()
             count++;
         }
     }
-    
+
     NS_LOG_DEBUG("Node " << m_nodeId << " counted " << count << " nearby cluster heads");
     return count;
 }
