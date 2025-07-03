@@ -61,7 +61,8 @@ public:
         CH_ELECTED = 0,     ///< Node became cluster head
         JOINED_CLUSTER = 1, ///< Node joined a cluster
         LEFT_CLUSTER = 2,   ///< Node left a cluster
-        CH_CHANGED = 3      ///< Cluster head changed
+        CH_CHANGED = 3,     ///< Cluster head changed
+        TASK_COMPLETED = 4  ///< Task was completed by cluster
     };
 
     /**
@@ -185,6 +186,38 @@ public:
      */
     void SetSendPacketCallback(Callback<void, Ptr<Packet>, uint32_t> callback);
 
+    /**
+     * \brief Split a large cluster into smaller clusters (MEC Gateway operation)
+     * \param clusterId The ID of the cluster to split
+     */
+    void SplitLargeCluster(uint32_t clusterId);
+
+    /**
+     * \brief Rebalance cluster membership (MEC Gateway operation)
+     * \param clusterId The ID of the cluster to rebalance
+     */
+    void RebalanceCluster(uint32_t clusterId);
+
+    /**
+     * \brief Handle completion of MEC task processing
+     * \param taskId The ID of the completed task
+     * \param clusterId The ID of the cluster that requested the task
+     * \param processingTime The time taken to process the task
+     */
+    void OnTaskCompletion(uint32_t taskId, uint32_t clusterId, double processingTime);
+
+    /**
+     * \brief Cleanup orphaned clusters (MEC Gateway operation)
+     * \param clusterId The ID of the cluster to cleanup
+     */
+    void CleanupOrphanedCluster(uint32_t clusterId);
+
+    /**
+     * \brief Merge small clusters (MEC Gateway operation)
+     * \param clusterId The ID of the cluster to merge
+     */
+    void MergeSmallCluster(uint32_t clusterId);
+
 private:
     /**
      * \brief Structure to store cluster information
@@ -282,6 +315,7 @@ private:
     Ptr<ArpmecLqe> m_lqe;                                   ///< LQE module pointer
     ClusterInfo m_currentCluster;                           ///< Current cluster information
     std::set<uint32_t> m_clusterMembers;                    ///< Cluster members (if CH)
+    std::map<uint32_t, bool> m_neighborClusterHeads;        ///< Track which neighbors are cluster heads
     double m_energyLevel;                                   ///< Current energy level
     double m_energyThreshold;                               ///< Energy threshold for CH election
     Time m_clusteringInterval;                              ///< Interval for clustering decisions
@@ -296,7 +330,7 @@ private:
     Callback<void, Ptr<Packet>, uint32_t> m_sendPacketCallback;     ///< Packet send callback
 
     // ARPMEC clustering parameters from the paper
-    static constexpr double DEFAULT_ENERGY_THRESHOLD = 0.7;     ///< Default energy threshold for CH election
+    static constexpr double DEFAULT_ENERGY_THRESHOLD = 0.6;     ///< Adjusted energy threshold for CH election (was 0.7)
     static constexpr double CLUSTER_HEAD_BONUS = 0.1;           ///< Bonus for being CH candidate
     static const Time DEFAULT_CLUSTERING_INTERVAL;              ///< Default clustering interval
     static const Time DEFAULT_MEMBER_TIMEOUT;                   ///< Default member timeout

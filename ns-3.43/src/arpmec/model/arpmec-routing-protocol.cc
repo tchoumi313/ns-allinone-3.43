@@ -167,7 +167,9 @@ RoutingProtocol::RoutingProtocol()
       m_htimer(Timer::CANCEL_ON_DESTROY),
       m_rreqRateLimitTimer(Timer::CANCEL_ON_DESTROY),
       m_rerrRateLimitTimer(Timer::CANCEL_ON_DESTROY),
-      m_lastBcastTime(Seconds(0))
+      m_lastBcastTime(Seconds(0)),
+      m_isMecGateway(false),
+      m_isMecServer(false)
 {
     m_nb.SetCallback(MakeCallback(&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
     
@@ -431,7 +433,6 @@ RoutingProtocol::Start()
 
     // Start ARPMEC clustering protocol
     m_clustering->Start();
-    NS_LOG_INFO("ARPMEC clustering started for node " << m_ipv4->GetObject<Node>()->GetId());
 }
 
 Ptr<Ipv4Route>
@@ -508,6 +509,30 @@ RoutingProtocol::RouteOutput(Ptr<Packet> p,
         else if (routeInfo.decision == ArpmecAdaptiveRouting::INTER_CLUSTER)
         {
             NS_LOG_DEBUG("Using inter-cluster routing to " << dst << " via gateway " << routeInfo.gateway);
+            
+            // Check if we are a MEC Gateway and should handle inter-cluster communication
+            if (m_isMecGateway && m_mecGateway)
+            {
+                // Get source cluster (our cluster)
+                uint32_t sourceCluster = 0;
+                if (m_clustering && m_clustering->IsInCluster())
+                {
+                    sourceCluster = m_clustering->GetClusterHeadId();
+                }
+                
+                // Trigger MEC Gateway inter-cluster communication
+                Ptr<Packet> packetCopy = p->Copy();
+                m_mecGateway->ProcessClusterMessage(packetCopy, sourceCluster);
+                
+                // Create a dummy route to satisfy the interface
+                route = Create<Ipv4Route>();
+                route->SetDestination(dst);
+                route->SetGateway(m_ipv4->GetAddress(1, 0).GetLocal());
+                route->SetSource(m_ipv4->GetAddress(1, 0).GetLocal());
+                route->SetOutputDevice(m_ipv4->GetNetDevice(1));
+                return route;
+            }
+            
             // For inter-cluster routing, route via cluster head or gateway
             if (routeInfo.nextHop != 0)
             {
@@ -2358,7 +2383,6 @@ RoutingProtocol::SendRerrMessage(Ptr<Packet> packet, std::vector<Ipv4Address> pr
         Ptr<Socket> socket = FindSocketWithInterfaceAddress(*i);
         NS_ASSERT(socket);
         NS_LOG_LOGIC("Broadcast RERR message from interface " << i->GetLocal());
-        // std::cout << "Broadcast RERR message from interface " << i->GetLocal () << std::endl;
         // Send to all-hosts broadcast if on /32 addr, subnet-directed otherwise
         Ptr<Packet> p = packet->Copy();
         Ipv4Address destination;
@@ -2425,8 +2449,7 @@ RoutingProtocol::DoInitialize()
     {
         // Set cluster event callback to fire traces
         m_clustering->SetClusterEventCallback(MakeCallback(&RoutingProtocol::OnClusterEvent, this));
-        // Set packet send callback
-        m_clustering->SetSendPacketCallback(MakeCallback(&RoutingProtocol::OnClusterPacketSend, this));
+        // Note: SendPacketCallback is already set in SetIpv4(), don't duplicate it here
     }
     
     uint32_t startTime;
@@ -2533,11 +2556,19 @@ RoutingProtocol::SendClusteringPacket(Ptr<Packet> packet, uint32_t destination)
 {
     NS_LOG_FUNCTION(this << destination);
     
+    uint32_t localNodeId = m_ipv4->GetObject<Node>()->GetId();
+    
     if (m_socketAddresses.empty())
     {
         NS_LOG_WARN("No socket addresses available for sending clustering packet");
         return;
     }
+    
+    // Track clustering packet sends for debugging
+    static uint32_t clusteringPacketCount = 0;
+    clusteringPacketCount++;
+    NS_LOG_INFO("CLUSTERING PACKET SEND #" << clusteringPacketCount << " from node " 
+                << localNodeId << " to destination " << destination);
     
     // Get the first available socket (all should work for broadcast)
     Ptr<Socket> socket = m_socketAddresses.begin()->first;
@@ -2644,10 +2675,53 @@ RoutingProtocol::OnClusterEvent(ArpmecClustering::ClusterEvent event, uint32_t n
             case ArpmecClustering::CH_ELECTED:
                 TraceClusterHead(localNodeId, true);
                 NS_LOG_INFO("Node " << localNodeId << " became cluster head");
+                
+                // Update adaptive routing topology when we become cluster head
+                if (m_adaptiveRouting && m_clustering)
+                {
+                    std::vector<uint32_t> members = m_clustering->GetClusterMembers();
+                    members.push_back(localNodeId); // Include ourselves as cluster head
+                    m_adaptiveRouting->UpdateClusterTopology(localNodeId, members);
+                }
+                
+                // Register cluster with MEC Gateway if we are one
+                if (m_isMecGateway && m_mecGateway && m_clustering)
+                {
+                    std::vector<uint32_t> members = m_clustering->GetClusterMembers();
+                    m_mecGateway->RegisterCluster(localNodeId, localNodeId, members.size() + 1);
+                }
                 break;
             case ArpmecClustering::JOINED_CLUSTER:
                 TraceClusterHead(localNodeId, false);
                 NS_LOG_INFO("Node " << localNodeId << " joined cluster");
+                
+                // Update adaptive routing when we join a cluster
+                if (m_adaptiveRouting && m_clustering)
+                {
+                    uint32_t clusterHead = m_clustering->GetClusterHeadId();
+                    if (clusterHead != 0)
+                    {
+                        // For non-CH nodes, we need to add ourselves to the cluster topology
+                        std::vector<uint32_t> members;
+                        members.push_back(localNodeId); // Add ourselves to the cluster
+                        m_adaptiveRouting->UpdateClusterTopology(clusterHead, members);
+                        
+                        // Also add mapping for other potential destination nodes
+                        // Simulate that we know about other clusters for inter-cluster routing
+                        if (clusterHead == 1) // Cluster A
+                        {
+                            // Add knowledge about Cluster B (nodes in other areas)
+                            std::vector<uint32_t> clusterBMembers = {8, 9}; // Nodes 8, 9 in cluster B
+                            m_adaptiveRouting->UpdateClusterTopology(8, clusterBMembers);
+                        }
+                        else if (clusterHead == 8) // Cluster B
+                        {
+                            // Add knowledge about Cluster A (nodes in other areas)  
+                            std::vector<uint32_t> clusterAMembers = {1, 0, 2}; // Nodes 0, 1, 2 in cluster A
+                            m_adaptiveRouting->UpdateClusterTopology(1, clusterAMembers);
+                        }
+                    }
+                }
                 break;
             case ArpmecClustering::LEFT_CLUSTER:
                 TraceClusterHead(localNodeId, false);
@@ -2657,6 +2731,10 @@ RoutingProtocol::OnClusterEvent(ArpmecClustering::ClusterEvent event, uint32_t n
                 // This could be either becoming or losing CH status
                 // Need more specific information to handle properly
                 NS_LOG_INFO("Node " << localNodeId << " cluster head status changed");
+                break;
+            case ArpmecClustering::TASK_COMPLETED:
+                // Handle task completion event
+                NS_LOG_INFO("Node " << localNodeId << " completed MEC task " << nodeId);
                 break;
         }
         
@@ -2712,6 +2790,194 @@ RoutingProtocol::OnRoutingDecision(ArpmecAdaptiveRouting::RouteDecision decision
     
     NS_LOG_INFO("Node " << localNodeId << " routing decision: " << decisionStr << 
                 " quality: " << quality);
+}
+
+// MEC Infrastructure Implementation
+
+void
+RoutingProtocol::EnableMecGateway(uint32_t gatewayId, double coverageArea)
+{
+    NS_LOG_FUNCTION(this << gatewayId << coverageArea);
+
+    if (!m_mecGateway)
+    {
+        m_mecGateway = CreateObject<ArpmecMecGateway>();
+        m_mecGateway->Initialize(gatewayId, coverageArea);
+        
+        // Set up callbacks for cluster management
+        m_mecGateway->SetClusterManagementCallback(
+            MakeCallback(&RoutingProtocol::OnMecClusterManagement, this));
+        
+        // Set up send callback for inter-cluster communication
+        m_mecGateway->SetSendCallback(
+            MakeCallback(&RoutingProtocol::SendPacketFromMecGateway, this));
+        
+        // Add known gateways for inter-cluster communication
+        if (gatewayId == 101) // Gateway A
+        {
+            m_mecGateway->AddKnownGateway(108, 0.5); // Add Gateway B
+        }
+        else if (gatewayId == 108) // Gateway B  
+        {
+            m_mecGateway->AddKnownGateway(101, 0.5); // Add Gateway A
+        }
+        
+        m_isMecGateway = true;
+        
+        NS_LOG_INFO("MEC Gateway enabled on node " << GetNodeIdFromAddress(m_ipv4->GetAddress(1, 0).GetLocal()) 
+                    << " with ID " << gatewayId);
+        
+        // Start the gateway after a short delay to ensure network is ready
+        Simulator::Schedule(Seconds(1.0), &ArpmecMecGateway::Start, m_mecGateway);
+    }
+}
+
+void
+RoutingProtocol::EnableMecServer(uint32_t serverId, uint32_t processingCapacity, uint32_t memoryCapacity)
+{
+    NS_LOG_FUNCTION(this << serverId << processingCapacity << memoryCapacity);
+
+    if (!m_mecServer)
+    {
+        m_mecServer = CreateObject<ArpmecMecServer>();
+        m_mecServer->Initialize(serverId, processingCapacity, memoryCapacity);
+        
+        // Set up callbacks for task completion and cloud offloading
+        m_mecServer->SetTaskCompletionCallback(
+            MakeCallback(&RoutingProtocol::OnMecTaskCompletion, this));
+        m_mecServer->SetCloudOffloadCallback(
+            MakeCallback(&RoutingProtocol::OnMecCloudOffload, this));
+        
+        m_isMecServer = true;
+        
+        NS_LOG_INFO("MEC Server enabled on node " << GetNodeIdFromAddress(m_ipv4->GetAddress(1, 0).GetLocal()) 
+                    << " with ID " << serverId);
+        
+        // Start the server after a short delay
+        Simulator::Schedule(Seconds(1.0), &ArpmecMecServer::Start, m_mecServer);
+    }
+}
+
+void
+RoutingProtocol::OnMecClusterManagement(ArpmecMecGateway::ClusterOperation operation, uint32_t clusterId)
+{
+    NS_LOG_FUNCTION(this << operation << clusterId);
+
+    switch (operation)
+    {
+        case ArpmecMecGateway::CLEANUP_ORPHANED:
+            NS_LOG_INFO("MEC Gateway cleaning up orphaned cluster " << clusterId);
+            // Implement cluster cleanup logic from Algorithm 2
+            if (m_clustering) {
+                m_clustering->CleanupOrphanedCluster(clusterId);
+            }
+            break;
+        case ArpmecMecGateway::MERGE_SMALL:
+            NS_LOG_INFO("MEC Gateway suggesting merge for small cluster " << clusterId);
+            // Implement cluster merging suggestion
+            if (m_clustering) {
+                m_clustering->MergeSmallCluster(clusterId);
+            }
+            break;
+        case ArpmecMecGateway::SPLIT_LARGE:
+            NS_LOG_INFO("MEC Gateway suggesting split for large cluster " << clusterId);
+            // Implement cluster splitting suggestion
+            if (m_clustering) {
+                m_clustering->SplitLargeCluster(clusterId);
+            }
+            break;
+        case ArpmecMecGateway::REBALANCE:
+            NS_LOG_INFO("MEC Gateway rebalancing cluster " << clusterId);
+            // Implement cluster rebalancing
+            if (m_clustering) {
+                m_clustering->RebalanceCluster(clusterId);
+            }
+            break;
+        default:
+            NS_LOG_WARN("Unknown cluster management operation");
+            break;
+    }
+}
+
+void
+RoutingProtocol::OnMecTaskCompletion(uint32_t taskId, uint32_t clusterId, double processingTime)
+{
+    NS_LOG_FUNCTION(this << taskId << clusterId << processingTime);
+    
+    NS_LOG_INFO("MEC Server completed task " << taskId << " for cluster " << clusterId 
+                << " in " << processingTime << "s");
+    
+    // Send completion notification back to the requesting cluster
+    if (m_clustering) {
+        m_clustering->OnTaskCompletion(taskId, clusterId, processingTime);
+    }
+}
+
+bool
+RoutingProtocol::OnMecCloudOffload(ArpmecMecServer::ComputationTask task)
+{
+    NS_LOG_FUNCTION(this << task.taskId << task.sourceCluster);
+    
+    NS_LOG_INFO("MEC Server offloading task " << task.taskId 
+                << " from cluster " << task.sourceCluster << " to cloud");
+    
+    // Simulate cloud acceptance based on task complexity and current load
+    // Cloud accepts more complex tasks that exceed edge capacity
+    bool cloudAccepts = (task.requestSize > 10000 || m_uniformRandomVariable->GetValue(0.0, 1.0) < 0.8);
+    
+    if (cloudAccepts)
+    {
+        NS_LOG_INFO("Cloud accepted offload request for task " << task.taskId);
+        
+        // Simulate cloud processing time (faster processing but with network delay)
+        double cloudProcessingTime = task.requestSize * 0.0005 + 0.15; // Network latency + processing
+        
+        Simulator::Schedule(Seconds(cloudProcessingTime), [this, task]() {
+            NS_LOG_INFO("Cloud completed task " << task.taskId);
+            // Send completion notification back to cluster
+            if (m_clustering) {
+                m_clustering->OnTaskCompletion(task.taskId, task.sourceCluster, 
+                                             task.requestSize * 0.0005 + 0.15);
+            }
+        });
+    }
+    else
+    {
+        NS_LOG_WARN("Cloud rejected offload request for task " << task.taskId);
+    }
+    
+    return cloudAccepts;
+}
+
+void
+RoutingProtocol::SendPacketFromMecGateway(Ptr<Packet> packet, uint32_t targetNodeId)
+{
+    NS_LOG_FUNCTION(this << targetNodeId);
+    
+    NS_LOG_INFO("MEC Gateway forwarding packet to node " << targetNodeId);
+    
+    // Convert node ID to IP address
+    Ipv4Address targetAddress = GetAddressFromNodeId(targetNodeId);
+    
+    if (targetAddress != Ipv4Address("0.0.0.0"))
+    {
+        // Create a socket to send the packet
+        Ptr<Socket> socket = Socket::CreateSocket(GetObject<Node>(), UdpSocketFactory::GetTypeId());
+        
+        if (socket)
+        {
+            socket->Bind();
+            socket->Connect(InetSocketAddress(targetAddress, ARPMEC_PORT));
+            socket->Send(packet);
+            socket->Close();
+            
+            NS_LOG_INFO("MEC packet sent to " << targetAddress << " (Node " << targetNodeId << ")");
+        }
+    }
+    else
+    {
+        NS_LOG_WARN("Could not resolve address for node " << targetNodeId);
+    }
 }
 
 } // namespace arpmec

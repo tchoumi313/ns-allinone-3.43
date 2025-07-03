@@ -137,6 +137,12 @@ public:
     void ResetStatistics();
 
 private:
+    /**
+     * \brief Handle cluster events from clustering module
+     * \param event The cluster event that occurred
+     * \param nodeId The node ID associated with the event
+     */
+    void OnClusterEvent(ArpmecClustering::ClusterEvent event, uint32_t nodeId);
     // Node information
     uint32_t m_nodeId;                          ///< Local node ID
     Ptr<ArpmecClustering> m_clustering;         ///< Clustering module
@@ -200,6 +206,11 @@ private:
      * \param quality Route quality achieved
      */
     void RecordRoutingDecision(RouteDecision decision, double quality);
+
+    /**
+     * \brief Simulate cluster information broadcast to neighbors
+     */
+    void SimulateClusterInfoBroadcast();
 };
 
 } // namespace arpmec

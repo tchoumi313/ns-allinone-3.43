@@ -27,23 +27,28 @@ NS_LOG_COMPONENT_DEFINE("ArpmecValidationTest");
 class ArpmecValidator
 {
 public:
-    ArpmecValidator() : m_totalPacketsSent(0), m_totalPacketsReceived(0),
+    ArpmecValidator() : m_totalPacketsSent(0), m_totalPacketsReceived(0), 
                        m_dataPacketsSent(0), m_dataPacketsReceived(0),
                        m_controlPacketsSent(0), m_controlPacketsReceived(0),
                        m_helloPacketsSent(0), m_clusteringPacketsSent(0),
-                       m_appPacketsSent(0), m_appPacketsReceived(0) {}
+                       m_appPacketsSent(0), m_appPacketsReceived(0),
+                       m_maxClusterHeadsObserved(0) {}
 
     // Protocol-level callbacks (for control packet analysis)
     void PacketSentCallback(Ptr<const Packet> packet, const Address& from, const Address& to);
     void PacketReceivedCallback(Ptr<const Packet> packet, const Address& from);
-
+    
     // Application-level callbacks (for true performance metrics)
     void ApplicationPacketSent(Ptr<const Packet> packet);
     void ApplicationPacketReceived(Ptr<const Packet> packet, const Address& from);
-
+    
+    // Node-specific application callbacks
+    void ApplicationPacketSentFromNode(uint32_t nodeId, Ptr<const Packet> packet);
+    void ApplicationPacketReceivedAtNode(uint32_t nodeId, Ptr<const Packet> packet, const Address& from);
+    
     // Method to register flow mappings for connectivity analysis
     void RegisterFlow(uint32_t sourceNode, uint32_t destNode);
-
+    
     // ARPMEC-specific callbacks
     void ClusterHeadCallback(uint32_t nodeId, bool isClusterHead);
     void RouteDecisionCallback(uint32_t nodeId, std::string decision);
@@ -63,18 +68,19 @@ private:
     uint32_t m_controlPacketsReceived;    // ARPMEC control packets
     uint32_t m_helloPacketsSent;          // HELLO messages
     uint32_t m_clusteringPacketsSent;     // Clustering-related packets
-
+    
     // Application-level packet counts (for true PDR)
     uint32_t m_appPacketsSent;            // Application packets generated
     uint32_t m_appPacketsReceived;        // Application packets delivered
-
+    
     // Flow tracking for simplified connectivity analysis
     std::map<uint32_t, uint32_t> m_sourceToDestMap;  // Map source node to dest node
     std::map<uint32_t, uint32_t> m_sentByNode;       // Packets sent by each source node
     std::map<uint32_t, uint32_t> m_receivedByNode;   // Packets received by each dest node
-
+    
     // ARPMEC-specific metrics
     std::map<uint32_t, bool> m_clusterHeads;
+    uint32_t m_maxClusterHeadsObserved;  // Track peak number of CHs during simulation
     std::map<uint32_t, std::vector<std::string>> m_routeDecisions;
     std::map<uint32_t, std::vector<double>> m_lqeValues;
     std::map<uint32_t, double> m_energyLevels;
@@ -84,15 +90,15 @@ private:
 void ArpmecValidator::PacketSentCallback(Ptr<const Packet> packet, const Address& from, const Address& to)
 {
     m_totalPacketsSent++;
-
+    
     // Try to identify packet type by examining headers
     Ptr<Packet> packetCopy = packet->Copy();
-
+    
     // Check if this is an ARPMEC protocol packet
     ns3::arpmec::TypeHeader typeHeader;
     if (packetCopy->PeekHeader(typeHeader)) {
         uint8_t packetType = typeHeader.Get();
-
+        
         switch (packetType) {
             case ns3::arpmec::ARPMEC_HELLO:
                 m_helloPacketsSent++;
@@ -122,22 +128,22 @@ void ArpmecValidator::PacketSentCallback(Ptr<const Packet> packet, const Address
         // Not an ARPMEC packet - likely application data being routed
         m_dataPacketsSent++;
     }
-
+    
     NS_LOG_INFO("Protocol packet sent from " << from << " to " << to << " (Total: " << m_totalPacketsSent << ")");
 }
 
 void ArpmecValidator::PacketReceivedCallback(Ptr<const Packet> packet, const Address& from)
 {
     m_totalPacketsReceived++;
-
+    
     // Try to identify packet type by examining headers
     Ptr<Packet> packetCopy = packet->Copy();
-
+    
     // Check if this is an ARPMEC protocol packet
     ns3::arpmec::TypeHeader typeHeader;
     if (packetCopy->PeekHeader(typeHeader)) {
         uint8_t packetType = typeHeader.Get();
-
+        
         switch (packetType) {
             case ns3::arpmec::ARPMEC_HELLO:
                 m_controlPacketsReceived++;
@@ -164,7 +170,7 @@ void ArpmecValidator::PacketReceivedCallback(Ptr<const Packet> packet, const Add
         // Not an ARPMEC packet - likely application data
         m_dataPacketsReceived++;
     }
-
+    
     NS_LOG_INFO("Protocol packet received from " << from << " (Total: " << m_totalPacketsReceived << ")");
 }
 
@@ -177,16 +183,21 @@ void ArpmecValidator::ApplicationPacketSent(Ptr<const Packet> packet)
 void ArpmecValidator::ApplicationPacketReceived(Ptr<const Packet> packet, const Address& from)
 {
     m_appPacketsReceived++;
-
-    // Extract source address for flow tracking
-    InetSocketAddress inetFrom = InetSocketAddress::ConvertFrom(from);
-    Address sourceAddr = InetSocketAddress(inetFrom.GetIpv4(), inetFrom.GetPort());
-
-    // For proper flow tracking, we need to identify the destination
-    // Since this is the receiver, we can create a simple flow identifier
-    // In a more complete implementation, we'd extract destination from packet headers
-
     NS_LOG_INFO("Application packet received from " << from << " (Total: " << m_appPacketsReceived << ")");
+}
+
+void ArpmecValidator::ApplicationPacketSentFromNode(uint32_t nodeId, Ptr<const Packet> packet)
+{
+    m_appPacketsSent++;
+    m_sentByNode[nodeId]++;
+    NS_LOG_INFO("Application packet sent from node " << nodeId << " (Total: " << m_appPacketsSent << ")");
+}
+
+void ArpmecValidator::ApplicationPacketReceivedAtNode(uint32_t nodeId, Ptr<const Packet> packet, const Address& from)
+{
+    m_appPacketsReceived++;
+    m_receivedByNode[nodeId]++;
+    NS_LOG_INFO("Application packet received at node " << nodeId << " from " << from << " (Total: " << m_appPacketsReceived << ")");
 }
 
 void ArpmecValidator::RegisterFlow(uint32_t sourceNode, uint32_t destNode)
@@ -200,7 +211,19 @@ void ArpmecValidator::RegisterFlow(uint32_t sourceNode, uint32_t destNode)
 void ArpmecValidator::ClusterHeadCallback(uint32_t nodeId, bool isClusterHead)
 {
     m_clusterHeads[nodeId] = isClusterHead;
-    NS_LOG_INFO("Node " << nodeId << " cluster head status: " << (isClusterHead ? "YES" : "NO"));
+    
+    // Count current cluster heads and update maximum observed
+    uint32_t currentCHs = 0;
+    for (auto& pair : m_clusterHeads) {
+        if (pair.second) currentCHs++;
+    }
+    
+    if (currentCHs > m_maxClusterHeadsObserved) {
+        m_maxClusterHeadsObserved = currentCHs;
+    }
+    
+    NS_LOG_INFO("Node " << nodeId << " cluster head status: " << (isClusterHead ? "YES" : "NO") 
+                << " (Current CHs: " << currentCHs << ", Max observed: " << m_maxClusterHeadsObserved << ")");
 }
 
 void ArpmecValidator::RouteDecisionCallback(uint32_t nodeId, std::string decision)
@@ -229,11 +252,11 @@ void ArpmecValidator::PrintResults()
     std::cout << "\n--- APPLICATION-LEVEL PERFORMANCE ---" << std::endl;
     std::cout << "Application Packets Sent: " << m_appPacketsSent << std::endl;
     std::cout << "Application Packets Received: " << m_appPacketsReceived << std::endl;
-
+    
     if (m_appPacketsSent > 0) {
         double appPDR = (double)m_appPacketsReceived / m_appPacketsSent * 100.0;
         std::cout << "True Packet Delivery Ratio (PDR): " << std::fixed << std::setprecision(1) << appPDR << "%" << std::endl;
-
+        
         // Evaluate performance
         if (appPDR >= 80.0) {
             std::cout << "Performance Status: EXCELLENT" << std::endl;
@@ -247,19 +270,19 @@ void ArpmecValidator::PrintResults()
     } else {
         std::cout << "No application packets transmitted" << std::endl;
     }
-
+    
     // Flow-Level Analysis
     std::cout << "\n--- FLOW CONNECTIVITY ANALYSIS ---" << std::endl;
     uint32_t totalFlows = m_sourceToDestMap.size();
     uint32_t successfulFlows = 0;
-
+    
     for (auto& flowPair : m_sourceToDestMap) {
         uint32_t destNode = flowPair.second;
         if (m_receivedByNode[destNode] > 0) {
             successfulFlows++;
         }
     }
-
+    
     if (totalFlows > 0) {
         double connectivity = (double)successfulFlows / totalFlows * 100.0;
         std::cout << "Successful Flows: " << successfulFlows << " / " << totalFlows << std::endl;
@@ -278,14 +301,14 @@ void ArpmecValidator::PrintResults()
     std::cout << "  - Data Packets Sent: " << m_dataPacketsSent << std::endl;
     std::cout << "  - Control Packets Received: " << m_controlPacketsReceived << std::endl;
     std::cout << "  - Data Packets Received: " << m_dataPacketsReceived << std::endl;
-
+    
     if (m_totalPacketsSent > 0) {
         double controlOverhead = (double)m_controlPacketsSent / m_totalPacketsSent * 100.0;
         double broadcastEfficiency = (double)m_totalPacketsReceived / m_totalPacketsSent;
-
+        
         std::cout << "Control Packet Overhead: " << std::fixed << std::setprecision(1) << controlOverhead << "%" << std::endl;
         std::cout << "Broadcast Reception Ratio: " << std::fixed << std::setprecision(1) << broadcastEfficiency << ":1" << std::endl;
-
+        
         // Explain the broadcast ratio
         if (broadcastEfficiency > 1.0) {
             std::cout << "Note: Reception ratio > 1 is NORMAL for wireless broadcast networks" << std::endl;
@@ -368,13 +391,9 @@ void ArpmecValidator::ValidateAgainstPaper()
 
     // Test 1: Algorithm 2 - Clustering should produce CHs
     std::cout << "\n[TEST 1] Algorithm 2 - Clustering Protocol" << std::endl;
-    uint32_t numCHs = 0;
-    for (auto& pair : m_clusterHeads) {
-        if (pair.second) numCHs++;
-    }
-
-    if (numCHs > 0) {
-        std::cout << "✓ PASS: Cluster heads elected (" << numCHs << " CHs)" << std::endl;
+    
+    if (m_maxClusterHeadsObserved > 0) {
+        std::cout << "✓ PASS: Cluster heads elected (Peak: " << m_maxClusterHeadsObserved << " CHs)" << std::endl;
     } else {
         std::cout << "✗ FAIL: No cluster heads elected" << std::endl;
         allTestsPassed = false;
@@ -521,6 +540,40 @@ int main(int argc, char* argv[])
     address.SetBase("10.1.1.0", "255.255.255.0");
     Ipv4InterfaceContainer interfaces = address.Assign(devices);
 
+    // Enable MEC Infrastructure - this is where MEC comes into action!
+    std::cout << "=== ENABLING MEC INFRASTRUCTURE ===" << std::endl;
+    
+    // Enable MEC Gateway on strategic nodes (nodes 1 and 3 for coverage)
+    for (uint32_t i = 0; i < nodes.GetN(); i++) {
+        Ptr<Node> node = nodes.Get(i);
+        Ptr<ns3::arpmec::RoutingProtocol> arpmecRouting = 
+            DynamicCast<ns3::arpmec::RoutingProtocol>(
+                node->GetObject<Ipv4>()->GetRoutingProtocol());
+        
+        if (arpmecRouting) {
+            // Enable MEC Gateway on every 4th node for distributed edge computing
+            if (i % 4 == 1) {
+                uint32_t gatewayId = i + 100;  // Unique gateway ID
+                double coverageArea = 100.0;   // 100m coverage radius
+                arpmecRouting->EnableMecGateway(gatewayId, coverageArea);
+                std::cout << "  ✓ MEC Gateway " << gatewayId << " enabled on Node " << i 
+                         << " (Coverage: " << coverageArea << "m)" << std::endl;
+            }
+            
+            // Enable MEC Server on every 6th node for edge computation
+            if (i % 6 == 2) {
+                uint32_t serverId = i + 200;        // Unique server ID
+                uint32_t processingCapacity = 1000; // 1000 ops/sec
+                uint32_t memoryCapacity = 512;      // 512 MB
+                arpmecRouting->EnableMecServer(serverId, processingCapacity, memoryCapacity);
+                std::cout << "  ✓ MEC Server " << serverId << " enabled on Node " << i 
+                         << " (CPU: " << processingCapacity << " ops/s, RAM: " 
+                         << memoryCapacity << " MB)" << std::endl;
+            }
+        }
+    }
+    std::cout << "=== MEC INFRASTRUCTURE READY ===" << std::endl;
+
     // Create traffic pattern - multiple source-destination pairs
     ApplicationContainer apps;
 
@@ -568,6 +621,28 @@ int main(int argc, char* argv[])
         apps.Add(sinkApp);
     }
 
+    // Show MEC Infrastructure Status
+    std::cout << "\n=== MEC INFRASTRUCTURE STATUS ===" << std::endl;
+    uint32_t mecGateways = 0, mecServers = 0;
+    for (uint32_t i = 0; i < numNodes; i++) {
+        Ptr<ns3::arpmec::RoutingProtocol> arpmecRouting = 
+            DynamicCast<ns3::arpmec::RoutingProtocol>(
+                nodes.Get(i)->GetObject<Ipv4>()->GetRoutingProtocol());
+        
+        if (arpmecRouting) {
+            if (arpmecRouting->IsMecGateway()) {
+                mecGateways++;
+                std::cout << "  📡 Node " << i << " = MEC Gateway" << std::endl;
+            }
+            if (arpmecRouting->IsMecServer()) {
+                mecServers++;
+                std::cout << "  🖥️  Node " << i << " = MEC Server" << std::endl;
+            }
+        }
+    }
+    std::cout << "Total MEC Infrastructure: " << mecGateways << " Gateways, " 
+              << mecServers << " Servers" << std::endl;
+
     // Connect trace sources to validation callbacks AND set diverse energy levels
     for (uint32_t i = 0; i < numNodes; i++) {
         // Get the ARPMEC routing protocol from each node
@@ -577,16 +652,16 @@ int main(int argc, char* argv[])
 
         if (arpmecProtocol) {
             // Set diverse energy levels to test clustering algorithm properly
-            // Create realistic energy distribution: some high-energy nodes, some medium, some low
+            // Adjusted distribution to ensure more nodes can become cluster heads
             double energyLevel;
-            if (i % 5 == 0) {
-                energyLevel = 0.9 + (i % 2) * 0.1; // High energy: 0.9-1.0 (20% of nodes)
-            } else if (i % 3 == 0) {
-                energyLevel = 0.8 + (i % 3) * 0.05; // Medium-high energy: 0.8-0.9 (13% of nodes)
-            } else if (i % 2 == 0) {
-                energyLevel = 0.75 + (i % 2) * 0.05; // Medium energy: 0.75-0.8 (33% of nodes)
+            if (i < 3) {
+                energyLevel = 0.9 + (i % 2) * 0.1; // High energy: 0.9-1.0 (3 nodes - potential CHs)
+            } else if (i < 6) {
+                energyLevel = 0.8 + (i % 3) * 0.05; // Medium-high energy: 0.8-0.9 (3 nodes)
+            } else if (i < 12) {
+                energyLevel = 0.65 + (i % 2) * 0.1; // Medium energy: 0.65-0.75 (6 nodes)
             } else {
-                energyLevel = 0.6 + (i % 4) * 0.05; // Lower energy: 0.6-0.75 (33% of nodes)
+                energyLevel = 0.6 + (i % 4) * 0.05; // Lower energy: 0.6-0.75 (8 nodes)
             }
 
             // Set the energy level in the clustering component

@@ -102,6 +102,19 @@ public:
     std::vector<uint32_t> GetNeighborsByQuality();
 
     /**
+     * \brief Get link score for a neighbor (wrapper for PredictLinkScore)
+     * \param neighborId The ID of the neighbor node
+     * \return The link quality score (0.0 to 1.0)
+     */
+    double GetLinkScore(uint32_t neighborId);
+
+    /**
+     * \brief Get all neighbor IDs
+     * \return Vector of all neighbor IDs
+     */
+    std::vector<uint32_t> GetNeighbors();
+
+    /**
      * \brief Check if a neighbor is still active (recently heard from)
      * \param neighborId The ID of the neighbor node
      * \return True if the neighbor is considered active

@@ -112,9 +112,6 @@ ArpmecLqe::UpdateLinkQuality(uint32_t neighborId, double rssi, double pdr, uint6
     // Calculate new link score using simplified Random Forest
     double avgRssi = CalculateAverageRssi(info);
     info.linkScore = SimplifiedRandomForestPredict(avgRssi, info.currentPdr);
-
-    NS_LOG_DEBUG("Updated neighbor " << neighborId << ": RSSI=" << rssi
-                 << ", PDR=" << info.currentPdr << ", Score=" << info.linkScore);
 }
 
 double
@@ -191,13 +188,6 @@ ArpmecLqe::GetNeighborsByQuality()
         if (IsNeighborActive(neighbor.first))
         {
             neighborScores.emplace_back(neighbor.first, neighbor.second.linkScore);
-            NS_LOG_DEBUG("Active neighbor " << neighbor.first
-                         << " with score " << neighbor.second.linkScore);
-        }
-        else
-        {
-            NS_LOG_DEBUG("Inactive neighbor " << neighbor.first
-                         << " last heard: " << (Simulator::Now() - neighbor.second.lastHeardFrom).GetSeconds() << "s ago");
         }
     }
 
@@ -214,7 +204,6 @@ ArpmecLqe::GetNeighborsByQuality()
         result.push_back(pair.first);
     }
 
-    NS_LOG_DEBUG("Returning " << result.size() << " active neighbors sorted by quality");
     return result;
 }
 
@@ -423,6 +412,26 @@ ArpmecLqe::DecisionTree3(double rssi, double pdr)
 
     // Weighted combination: 60% PDR, 40% RSSI
     return 0.6 * pdrScore + 0.4 * rssiScore;
+}
+
+double
+ArpmecLqe::GetLinkScore(uint32_t neighborId)
+{
+    return PredictLinkScore(neighborId);
+}
+
+std::vector<uint32_t>
+ArpmecLqe::GetNeighbors()
+{
+    NS_LOG_FUNCTION(this);
+
+    std::vector<uint32_t> result;
+    for (const auto& neighbor : m_neighbors)
+    {
+        result.push_back(neighbor.first);
+    }
+
+    return result;
 }
 
 } // namespace arpmec

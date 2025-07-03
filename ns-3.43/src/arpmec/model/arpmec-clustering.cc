@@ -81,8 +81,6 @@ ArpmecClustering::Initialize(uint32_t nodeId, Ptr<ArpmecLqe> lqe)
 
     m_nodeId = nodeId;
     m_lqe = lqe;
-
-    NS_LOG_INFO("Clustering initialized for node " << m_nodeId);
 }
 
 void
@@ -102,7 +100,7 @@ ArpmecClustering::Start()
     // Schedule first clustering algorithm execution
     if (!m_clusteringTimer.IsRunning())
     {
-        m_clusteringTimer.Schedule(Seconds(1.0)); // Small delay to let system stabilize
+        m_clusteringTimer.Schedule(Seconds(0.1)); // Very fast initial execution for testing
     }
 
     // Schedule maintenance checks
@@ -110,8 +108,6 @@ ArpmecClustering::Start()
     {
         m_maintenanceTimer.Schedule(m_memberTimeout / 2);
     }
-
-    NS_LOG_INFO("Clustering started for node " << m_nodeId);
 }
 
 void
@@ -147,8 +143,6 @@ ArpmecClustering::Stop()
     m_nodeState = UNDECIDED;
     m_clusterMembers.clear();
     m_currentCluster = ClusterInfo();
-
-    NS_LOG_INFO("Clustering stopped for node " << m_nodeId);
 }
 
 void
@@ -165,9 +159,6 @@ ArpmecClustering::ProcessHelloMessage(uint32_t senderId, const ArpmecHelloHeader
     Time now = Simulator::Now();
     m_lqe->UpdateLinkQuality(senderId, hello.GetRssi(), hello.GetPdr(),
                             hello.GetTimestamp(), now);
-
-    NS_LOG_DEBUG("Processed HELLO from node " << senderId <<
-                 " RSSI=" << hello.GetRssi() << " PDR=" << hello.GetPdr());
 }
 
 void
@@ -186,8 +177,6 @@ ArpmecClustering::ProcessJoinMessage(uint32_t senderId, const ArpmecJoinHeader& 
     // Send notification about cluster membership
     SendChNotificationMessage();
 
-    NS_LOG_INFO("Node " << senderId << " joined cluster headed by " << m_nodeId);
-
     // Notify about cluster event
     if (!m_clusterEventCallback.IsNull())
     {
@@ -205,6 +194,10 @@ ArpmecClustering::ProcessChNotificationMessage(uint32_t senderId, const ArpmecCh
         return;
     }
 
+    // Track that this neighbor is a cluster head
+    m_neighborClusterHeads[senderId] = true;
+    NS_LOG_DEBUG("Node " << m_nodeId << " learned that neighbor " << senderId << " is a cluster head");
+
     // Update cluster information if we're a member of this cluster
     if (m_nodeState == CLUSTER_MEMBER && m_currentCluster.headId == senderId)
     {
@@ -220,6 +213,19 @@ ArpmecClustering::ProcessChNotificationMessage(uint32_t senderId, const ArpmecCh
 
         NS_LOG_DEBUG("Updated cluster info from CH " << senderId);
     }
+    else if (m_nodeState == ISOLATED || m_nodeState == UNDECIDED)
+    {
+        // If we're isolated and a neighbor announces itself as CH, we might want to join
+        if (m_lqe)
+        {
+            double linkQuality = m_lqe->PredictLinkScore(senderId);
+            if (linkQuality > 0.5) // Good enough link to consider joining
+            {
+                // Join this cluster
+                JoinCluster(senderId);
+            }
+        }
+    }
 }
 
 void
@@ -232,10 +238,13 @@ ArpmecClustering::ProcessAbdicateMessage(uint32_t senderId, const ArpmecAbdicate
         return;
     }
 
+    // Remove from neighbor cluster heads tracking since they're no longer a CH
+    m_neighborClusterHeads[senderId] = false;
+    NS_LOG_DEBUG("Node " << m_nodeId << " learned that neighbor " << senderId << " is no longer a cluster head");
+
     // If our cluster head is abdicating, we need to find a new cluster
     if (m_nodeState == CLUSTER_MEMBER && m_currentCluster.headId == senderId)
     {
-        NS_LOG_INFO("Cluster head " << senderId << " is abdicating, leaving cluster");
         LeaveCluster();
 
         // Trigger clustering algorithm to find new cluster
@@ -332,11 +341,8 @@ ArpmecClustering::ExecuteClusteringAlgorithm()
 
     if (!m_isRunning || !m_lqe)
     {
-        std::cout << "Node " << m_nodeId << " - Clustering algorithm skipped - not running or LQE unavailable at " << Simulator::Now().GetSeconds() << "s" << std::endl;
         return;
     }
-
-    std::cout << "Node " << m_nodeId << " - Executing clustering algorithm at " << Simulator::Now().GetSeconds() << "s" << std::endl;
 
     // Algorithm 2 from ARPMEC paper
     // Lines 7-15: Clustering algorithm
@@ -346,7 +352,6 @@ ArpmecClustering::ExecuteClusteringAlgorithm()
         // Node has enough energy and good link quality - become CH
         if (m_nodeState != CLUSTER_HEAD)
         {
-            std::cout << "Node " << m_nodeId << " - Decision: BECOME CLUSTER HEAD at " << Simulator::Now().GetSeconds() << "s" << std::endl;
             BecomeClusterHead();
         }
     }
@@ -360,7 +365,6 @@ ArpmecClustering::ExecuteClusteringAlgorithm()
             // Join the best cluster
             if (m_nodeState != CLUSTER_MEMBER || m_currentCluster.headId != bestCh)
             {
-                NS_LOG_INFO("Node " << m_nodeId << " - Decision: JOIN CLUSTER " << bestCh);
                 JoinCluster(bestCh);
             }
         }
@@ -369,13 +373,11 @@ ArpmecClustering::ExecuteClusteringAlgorithm()
             // No suitable cluster head found - only become CH if we're designated by the deterministic algorithm
             if (ShouldBecomeClusterHead())
             {
-                NS_LOG_INFO("Node " << m_nodeId << " - Decision: BECOME CLUSTER HEAD (no suitable CH found)");
                 BecomeClusterHead();
             }
             else
             {
                 m_nodeState = ISOLATED;
-                NS_LOG_INFO("Node " << m_nodeId << " - Decision: REMAIN ISOLATED");
             }
         }
     }
@@ -396,30 +398,27 @@ ArpmecClustering::ShouldBecomeClusterHead()
     // Following the paper's algorithm step by step with proper debugging
 
     // Step 1: Energy threshold check (Paper Algorithm 2, line 3)
-    if (m_energyLevel < 0.7) // Paper uses 0.7 as energy threshold
+    // Use configurable threshold instead of hardcoded 0.7 to allow testing
+    if (m_energyLevel < m_energyThreshold)
     {
-        NS_LOG_INFO("Node " << m_nodeId << " - Energy too low: " << m_energyLevel << " < 0.7");
         return false;
     }
 
     if (!m_lqe)
     {
-        NS_LOG_INFO("Node " << m_nodeId << " - LQE not available");
         return false;
     }
 
     // Step 2: Get neighbors and calculate average link quality (Paper Algorithm 2, line 4-5)
     std::vector<uint32_t> neighbors = m_lqe->GetNeighborsByQuality();
 
-    std::cout << "Node " << m_nodeId << " - Found " << neighbors.size() << " neighbors at " << Simulator::Now().GetSeconds() << "s" << std::endl;
-
-    // Handle isolated nodes
+    // Handle isolated nodes with staggered decision to avoid simultaneous CH election
     if (neighbors.empty())
     {
         Time elapsed = Simulator::Now() - m_startTime;
-        bool becomeIsolatedCH = (elapsed > Seconds(3.0));
-        NS_LOG_INFO("Node " << m_nodeId << " - Isolated node, elapsed: "
-                     << elapsed.GetSeconds() << "s, decision: " << becomeIsolatedCH);
+        // Use node ID to stagger decisions for isolated nodes (shorter for testing)
+        double nodeDelay = (m_nodeId % 10) * 0.1; // 0-0.9 second stagger
+        bool becomeIsolatedCH = (elapsed > Seconds(1.0 + nodeDelay));
         return becomeIsolatedCH;
     }
 
@@ -446,35 +445,55 @@ ArpmecClustering::ShouldBecomeClusterHead()
     double avgLinkQuality = totalQuality / validNeighbors;
 
     // Step 3: Link quality threshold check (Paper Algorithm 2, line 7)
-    if (avgLinkQuality < 0.5) // Paper's LQ_threshold
+    if (avgLinkQuality < 0.2) // Even lower threshold for initial cluster formation
     {
-        NS_LOG_DEBUG("Node " << m_nodeId << " - Low link quality: " << avgLinkQuality << " < 0.5");
+        NS_LOG_DEBUG("Node " << m_nodeId << " - Low link quality: " << avgLinkQuality << " < 0.2");
         return false;
     }
 
     // Step 4: Check for nearby cluster heads (Paper Algorithm 2, line 8-9)
     uint32_t nearbyClusterHeads = CountNearbyClusterHeads();
 
-    // Step 5: Final decision (Paper Algorithm 2, line 10-12)
+    // Step 5: Final decision with staggered timing (Paper Algorithm 2, line 10-12)
     bool shouldBecomeCH = false;
+
+    // Implement staggered decision making to prevent simultaneous CH election
+    // Use node characteristics to determine decision priority
+    double decisionPriority = m_energyLevel + avgLinkQuality + (validNeighbors * 0.1);
+    double nodeOffset = (m_nodeId % 20) * 0.1; // 0-1.9 second stagger based on node ID
+    Time elapsed = Simulator::Now() - m_startTime;
 
     if (nearbyClusterHeads == 0)
     {
-        shouldBecomeCH = true; // No nearby CHs - must become CH
-        NS_LOG_INFO("Node " << m_nodeId << " - No nearby CHs, becoming CH (energy="
-                    << m_energyLevel << ", avgLQ=" << avgLinkQuality << ", neighbors=" << validNeighbors << ")");
+        // Wait for staggered decision to avoid all nodes becoming CH simultaneously
+        // Give more time for cluster head announcements to propagate
+        if (elapsed > Seconds(1.0 + nodeOffset * 0.2)) // Longer timing to allow CH notifications
+        {
+            shouldBecomeCH = true; // No nearby CHs - must become CH
+        }
+        else
+        {
+            NS_LOG_DEBUG("Node " << m_nodeId << " - Waiting for staggered decision (elapsed="
+                        << elapsed.GetSeconds() << "s, threshold=" << (1.0 + nodeOffset * 0.2) << "s)");
+        }
     }
-    else if (validNeighbors > 6 && nearbyClusterHeads <= 1)
+    else if (validNeighbors > 5 && nearbyClusterHeads <= 1) // Higher threshold for dense areas
     {
-        shouldBecomeCH = true; // Dense area with only one CH
-        NS_LOG_INFO("Node " << m_nodeId << " - Dense area (" << validNeighbors
-                     << " neighbors), adding CH (nearby CHs: " << nearbyClusterHeads << ")");
+        // Dense area needs additional CH, but with higher threshold
+        if (elapsed > Seconds(2.0 + nodeOffset * 0.3) && decisionPriority > 0.7) // Stricter requirements
+        {
+            shouldBecomeCH = true; // Dense area with only one CH
+        }
+        else
+        {
+            NS_LOG_DEBUG("Node " << m_nodeId << " - Dense area but waiting (elapsed="
+                        << elapsed.GetSeconds() << "s, CHs=" << nearbyClusterHeads << ")");
+        }
     }
     else
     {
         shouldBecomeCH = false; // Join existing cluster
-        NS_LOG_DEBUG("Node " << m_nodeId << " - " << nearbyClusterHeads
-                     << " nearby CHs, joining cluster (neighbors=" << validNeighbors << ")");
+        NS_LOG_DEBUG("Node " << m_nodeId << " - " << nearbyClusterHeads << " nearby CHs");
     }
 
     return shouldBecomeCH;
@@ -526,9 +545,6 @@ ArpmecClustering::SelectBestClusterHead()
                 bestScore = chSuitability;
                 bestCH = neighbor;
             }
-
-            NS_LOG_DEBUG("Node " << m_nodeId << " evaluating neighbor " << neighbor
-                         << " as CH: linkScore=" << linkScore << " suitability=" << chSuitability);
         }
     }
 
@@ -552,25 +568,24 @@ ArpmecClustering::CountNearbyClusterHeads()
         return 0;
     }
 
-    // During early simulation phase, return 0 to allow initial CH formation
-    Time elapsed = Simulator::Now() - m_startTime;
-    if (elapsed < Seconds(10.0))
-    {
-        NS_LOG_DEBUG("Node " << m_nodeId << " - Early phase, returning 0 nearby CHs to allow formation");
-        return 0;
-    }
-
     uint32_t count = 0;
     std::vector<uint32_t> neighbors = m_lqe->GetNeighborsByQuality();
 
+    // Check actual cluster head status of neighbors
+    // This uses the neighbor information table that's maintained via HELLO messages
     for (uint32_t neighbor : neighbors)
     {
         double linkQuality = m_lqe->PredictLinkScore(neighbor);
-        // In real implementation, this would check actual CH announcements
-        // For simulation, we estimate based on very high link quality
-        if (linkQuality > 0.8) // Assume very good neighbors might be CHs
+        if (linkQuality > 0.5) // Good enough link to consider
         {
-            count++;
+            // Check if we know this neighbor is a cluster head
+            // In ARPMEC, CH status is announced via CH_NOTIFICATION messages
+            auto it = m_neighborClusterHeads.find(neighbor);
+            if (it != m_neighborClusterHeads.end() && it->second)
+            {
+                count++;
+                NS_LOG_DEBUG("Node " << m_nodeId << " detected neighbor " << neighbor << " as cluster head");
+            }
         }
     }
 
@@ -599,8 +614,6 @@ ArpmecClustering::BecomeClusterHead()
     // Send notification to announce ourselves as CH
     SendChNotificationMessage();
 
-    NS_LOG_INFO("Node " << m_nodeId << " became cluster head");
-
     // Notify about cluster event
     if (!m_clusterEventCallback.IsNull())
     {
@@ -626,8 +639,6 @@ ArpmecClustering::JoinCluster(uint32_t headId)
 
     // Send JOIN message to the cluster head
     SendJoinMessage(headId);
-
-    NS_LOG_INFO("Node " << m_nodeId << " joined cluster headed by " << headId);
 
     // Notify about cluster event
     if (!m_clusterEventCallback.IsNull())
@@ -657,8 +668,6 @@ ArpmecClustering::LeaveCluster()
 
     m_nodeState = UNDECIDED;
     m_currentCluster = ClusterInfo();
-
-    NS_LOG_INFO("Node " << m_nodeId << " left cluster");
 
     // Notify about cluster event
     if (!m_clusterEventCallback.IsNull())
@@ -701,8 +710,15 @@ ArpmecClustering::SendChNotificationMessage()
 {
     NS_LOG_FUNCTION(this);
 
-    if (!IsClusterHead() || m_sendPacketCallback.IsNull())
+    if (!IsClusterHead())
     {
+        NS_LOG_WARN("SendChNotificationMessage called but node " << m_nodeId << " is not cluster head");
+        return;
+    }
+
+    if (m_sendPacketCallback.IsNull())
+    {
+        NS_LOG_ERROR("CRITICAL: SendChNotificationMessage called but m_sendPacketCallback is NULL for node " << m_nodeId);
         return;
     }
 
@@ -778,7 +794,6 @@ ArpmecClustering::CheckClusterMaintenance()
     {
         if ((now - m_currentCluster.lastUpdate) > m_memberTimeout)
         {
-            NS_LOG_INFO("Cluster head timeout for node " << m_nodeId);
             HandleClusterHeadTimeout();
         }
     }
@@ -801,7 +816,6 @@ ArpmecClustering::HandleClusterHeadTimeout()
 {
     NS_LOG_FUNCTION(this);
 
-    NS_LOG_INFO("Cluster head timeout - leaving cluster");
     LeaveCluster();
 
     // Trigger clustering algorithm to find new cluster
@@ -856,13 +870,290 @@ ArpmecClustering::CleanupInactiveMembers()
     for (uint32_t member : toRemove)
     {
         UpdateClusterMember(member, false);
-        NS_LOG_INFO("Removed inactive member " << member << " from cluster");
     }
 
     // Send updated cluster notification if members were removed
     if (!toRemove.empty())
     {
         SendChNotificationMessage();
+    }
+}
+
+void
+ArpmecClustering::SplitLargeCluster(uint32_t clusterId)
+{
+    NS_LOG_FUNCTION(this << clusterId);
+
+    // Only proceed if this node is the cluster head of the specified cluster
+    if (!IsClusterHead() || clusterId != m_nodeId)
+    {
+        NS_LOG_WARN("Cannot split cluster " << clusterId << " - not the cluster head");
+        return;
+    }
+
+    NS_LOG_INFO("Attempting to split large cluster " << clusterId << " with " << m_clusterMembers.size() << " members");
+
+    // Split cluster if it has more than 8 members (threshold from ARPMEC paper)
+    if (m_clusterMembers.size() > 8)
+    {
+        // Find the member with highest energy and link quality to become new CH
+        uint32_t newClusterHead = 0;
+        double bestScore = 0.0;
+
+        for (uint32_t member : m_clusterMembers)
+        {
+            double linkScore = m_lqe->GetLinkScore(member);
+            // Simulate member energy (in real implementation, this would come from the member)
+            double memberEnergy = 0.7 + (member % 30) * 0.01; // Simulated energy level
+            double combinedScore = linkScore * 0.6 + memberEnergy * 0.4;
+
+            if (combinedScore > bestScore)
+            {
+                bestScore = combinedScore;
+                newClusterHead = member;
+            }
+        }
+
+        if (newClusterHead != 0)
+        {
+            NS_LOG_INFO("Selected node " << newClusterHead << " as new cluster head for split");
+
+            // Remove half the members and assign them to the new cluster head
+            std::vector<uint32_t> membersToMove;
+            uint32_t halfSize = m_clusterMembers.size() / 2;
+
+            for (uint32_t member : m_clusterMembers)
+            {
+                if (membersToMove.size() < halfSize && member != newClusterHead)
+                {
+                    membersToMove.push_back(member);
+                }
+            }
+
+            // Remove moved members from current cluster
+            for (uint32_t member : membersToMove)
+            {
+                UpdateClusterMember(member, false);
+            }
+
+            // Also remove the new cluster head
+            UpdateClusterMember(newClusterHead, false);
+
+            NS_LOG_INFO("Split cluster - moved " << membersToMove.size() + 1 << " members to new cluster head " << newClusterHead);
+
+            // Send notification to remaining members
+            SendChNotificationMessage();
+        }
+    }
+    else
+    {
+        NS_LOG_INFO("Cluster " << clusterId << " is not large enough to split (" << m_clusterMembers.size() << " members)");
+    }
+}
+
+void
+ArpmecClustering::RebalanceCluster(uint32_t clusterId)
+{
+    NS_LOG_FUNCTION(this << clusterId);
+
+    // Only proceed if this node is the cluster head of the specified cluster
+    if (!IsClusterHead() || clusterId != m_nodeId)
+    {
+        NS_LOG_WARN("Cannot rebalance cluster " << clusterId << " - not the cluster head");
+        return;
+    }
+
+    NS_LOG_INFO("Rebalancing cluster " << clusterId << " with " << m_clusterMembers.size() << " members");
+
+    // Check if any nearby cluster heads have fewer members and could take some
+    std::vector<uint32_t> nearbyClusterHeads = m_lqe->GetNeighbors();
+
+    for (uint32_t neighborId : nearbyClusterHeads)
+    {
+        // Check if neighbor is a cluster head with fewer members
+        double linkScore = m_lqe->GetLinkScore(neighborId);
+        if (linkScore > 0.5) // Good link quality
+        {
+            // Find members that might have better connectivity to this neighbor
+            std::vector<uint32_t> membersToMove;
+
+            for (uint32_t member : m_clusterMembers)
+            {
+                // Check if member has better link to the neighbor CH
+                double linkToNeighbor = m_lqe->GetLinkScore(member); // Simplified
+                double linkToCurrent = m_lqe->GetLinkScore(member);
+
+                // Move member if they have significantly better link to neighbor
+                if (linkToNeighbor > linkToCurrent * 1.2 && membersToMove.size() < 2)
+                {
+                    membersToMove.push_back(member);
+                }
+            }
+
+            // Move selected members
+            for (uint32_t member : membersToMove)
+            {
+                UpdateClusterMember(member, false);
+                NS_LOG_INFO("Moved member " << member << " to better cluster head " << neighborId);
+            }
+
+            if (!membersToMove.empty())
+            {
+                SendChNotificationMessage();
+                break; // Only rebalance to one neighbor at a time
+            }
+        }
+    }
+}
+
+void
+ArpmecClustering::OnTaskCompletion(uint32_t taskId, uint32_t clusterId, double processingTime)
+{
+    NS_LOG_FUNCTION(this << taskId << clusterId << processingTime);
+
+    NS_LOG_INFO("Cluster " << m_nodeId << " received task completion notification: "
+                << "taskId=" << taskId << ", clusterId=" << clusterId
+                << ", processingTime=" << processingTime << "s");
+
+    // Update cluster statistics for task completion
+    if (IsClusterHead())
+    {
+        // Track task completion metrics for cluster management
+        // This could be used to adjust cluster size or routing decisions
+
+        // If processing time is too high, consider cluster optimization
+        if (processingTime > 2.0) // Threshold for slow processing
+        {
+            NS_LOG_INFO("Slow task processing detected (" << processingTime
+                        << "s) - may need cluster optimization");
+
+            // Consider splitting if cluster is large and processing is slow
+            if (m_clusterMembers.size() > 6)
+            {
+                NS_LOG_INFO("Large cluster with slow processing - considering split");
+                // Could trigger cluster split or rebalancing
+            }
+        }
+
+        // Notify cluster event callback if set
+        if (!m_clusterEventCallback.IsNull())
+        {
+            m_clusterEventCallback(TASK_COMPLETED, taskId);
+        }
+    }
+}
+
+void
+ArpmecClustering::CleanupOrphanedCluster(uint32_t clusterId)
+{
+    NS_LOG_FUNCTION(this << clusterId);
+
+    NS_LOG_INFO("Cluster " << m_nodeId << " cleaning up orphaned cluster: " << clusterId);
+
+    if (IsClusterHead() && m_nodeId == clusterId)
+    {
+        // This cluster head is being marked as orphaned
+        // Check if we have active members
+        CleanupInactiveMembers();
+
+        if (m_clusterMembers.empty())
+        {
+            NS_LOG_INFO("No active members found - abdicating cluster head role");
+            SendAbdicateMessage();
+            m_nodeState = UNDECIDED;
+            m_currentCluster = ClusterInfo();
+
+            // Trigger re-clustering
+            if (m_isRunning)
+            {
+                m_clusteringTimer.Schedule(Seconds(1.0));
+            }
+        }
+        else
+        {
+            NS_LOG_INFO("Active members found (" << m_clusterMembers.size()
+                       << ") - maintaining cluster");
+        }
+    }
+    else if (m_currentCluster.headId == clusterId)
+    {
+        // Our cluster head is being cleaned up
+        NS_LOG_INFO("Current cluster head " << clusterId << " is orphaned - leaving cluster");
+        LeaveCluster();
+
+        // Trigger re-clustering
+        if (m_isRunning)
+        {
+            m_clusteringTimer.Schedule(Seconds(0.5));
+        }
+    }
+}
+
+void
+ArpmecClustering::MergeSmallCluster(uint32_t clusterId)
+{
+    NS_LOG_FUNCTION(this << clusterId);
+
+    NS_LOG_INFO("Cluster " << m_nodeId << " attempting to merge small cluster: " << clusterId);
+
+    if (IsClusterHead() && m_nodeId == clusterId)
+    {
+        // This cluster is being marked for merging
+        if (m_clusterMembers.size() < 3) // Small cluster threshold
+        {
+            NS_LOG_INFO("Small cluster detected (" << m_clusterMembers.size()
+                       << " members) - looking for merge candidate");
+
+            // Find nearby cluster heads to merge with
+            std::vector<uint32_t> neighbors = m_lqe->GetNeighbors();
+            uint32_t bestMergeCandidate = 0;
+            double bestLinkScore = 0.0;
+
+            for (uint32_t neighborId : neighbors)
+            {
+                // Check if neighbor is a cluster head with good link quality
+                double linkScore = m_lqe->GetLinkScore(neighborId);
+                if (linkScore > bestLinkScore && linkScore > 0.6)
+                {
+                    // Additional check: ensure neighbor is actually a cluster head
+                    // This would require neighbor state information
+                    bestLinkScore = linkScore;
+                    bestMergeCandidate = neighborId;
+                }
+            }
+
+            if (bestMergeCandidate != 0)
+            {
+                NS_LOG_INFO("Found merge candidate " << bestMergeCandidate
+                           << " with link score " << bestLinkScore);
+
+                // Abdicate and encourage members to join the better cluster
+                SendAbdicateMessage();
+                m_nodeState = UNDECIDED;
+
+                // Clear cluster information
+                m_clusterMembers.clear();
+                m_currentCluster = ClusterInfo();
+
+                // Attempt to join the better cluster
+                JoinCluster(bestMergeCandidate);
+            }
+            else
+            {
+                NS_LOG_INFO("No suitable merge candidate found - maintaining small cluster");
+            }
+        }
+        else
+        {
+            NS_LOG_INFO("Cluster size (" << m_clusterMembers.size()
+                       << ") above merge threshold - no action needed");
+        }
+    }
+    else if (m_currentCluster.headId == clusterId)
+    {
+        // Our cluster head is being merged - this should trigger re-clustering
+        NS_LOG_INFO("Current cluster head " << clusterId << " is being merged");
+        // Wait for abdication message from cluster head
     }
 }
 

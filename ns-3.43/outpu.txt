@@ -1,0 +1,148 @@
+[0/2] Re-checking globbed directories...
+[1/655] Building CXX object src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-lqe.cc.o
+FAILED: src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-lqe.cc.o 
+/usr/bin/c++ -DHAVE_BOOST -DHAVE_BOOST_UNITS -DHAVE_GSL -DHAVE_LIBXML2 -DHAVE_PACKET_H -DHAVE_SQLITE3 -DNS3_ASSERT_ENABLE -DNS3_BUILD_PROFILE_DEBUG -DNS3_LOG_ENABLE -DPROJECT_SOURCE_PATH=\"/home/donsoft/ns-allinone-3.43/ns-3.43\" -DRAW_SOCK_CREATOR=\"/home/donsoft/ns-allinone-3.43/ns-3.43/build/src/fd-net-device/ns3.43-raw-sock-creator-default\" -DTAP_DEV_CREATOR=\"/home/donsoft/ns-allinone-3.43/ns-3.43/build/src/fd-net-device/ns3.43-tap-device-creator-default\" -D__LINUX__ -Darpmec_EXPORTS -I/home/donsoft/ns-allinone-3.43/ns-3.43/build/include -I/usr -I/usr/include/freetype2 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gtk-3.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/atk-1.0 -I/usr/include/libxml2 -Os -g -DNDEBUG -std=c++20 -fPIC   -fno-semantic-interposition -fdiagnostics-color=always -Wall -Wpedantic -MD -MT src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-lqe.cc.o -MF src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-lqe.cc.o.d -o src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-lqe.cc.o -c /home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-lqe.cc
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-lqe.cc:10:2: error: invalid preprocessing directive #in; did you mean #if?
+   10 | #in        if (neighbor.second.linkScore > bestScore)
+      |  ^~
+      |  if
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-lqe.cc:17:32: warning: missing terminating " character
+   17 |     return bestNeighbor;3/log.h"
+      |                                ^
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-lqe.cc:17:32: error: missing terminating " character
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-lqe.cc:11:9: error: expected unqualified-id before ‘{’ token
+   11 |         {
+      |         ^
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-lqe.cc:15:5: error: expected declaration before ‘}’ token
+   15 |     }
+      |     ^
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-lqe.cc:17:5: error: expected unqualified-id before ‘return’
+   17 |     return bestNeighbor;3/log.h"
+      |     ^~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-lqe.cc:17:25: error: expected unqualified-id before numeric constant
+   17 |     return bestNeighbor;3/log.h"
+      |                         ^
+[2/655] Building CXX object src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-mec-gateway.cc.o
+FAILED: src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-mec-gateway.cc.o 
+/usr/bin/c++ -DHAVE_BOOST -DHAVE_BOOST_UNITS -DHAVE_GSL -DHAVE_LIBXML2 -DHAVE_PACKET_H -DHAVE_SQLITE3 -DNS3_ASSERT_ENABLE -DNS3_BUILD_PROFILE_DEBUG -DNS3_LOG_ENABLE -DPROJECT_SOURCE_PATH=\"/home/donsoft/ns-allinone-3.43/ns-3.43\" -DRAW_SOCK_CREATOR=\"/home/donsoft/ns-allinone-3.43/ns-3.43/build/src/fd-net-device/ns3.43-raw-sock-creator-default\" -DTAP_DEV_CREATOR=\"/home/donsoft/ns-allinone-3.43/ns-3.43/build/src/fd-net-device/ns3.43-tap-device-creator-default\" -D__LINUX__ -Darpmec_EXPORTS -I/home/donsoft/ns-allinone-3.43/ns-3.43/build/include -I/usr -I/usr/include/freetype2 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gtk-3.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/atk-1.0 -I/usr/include/libxml2 -Os -g -DNDEBUG -std=c++20 -fPIC   -fno-semantic-interposition -fdiagnostics-color=always -Wall -Wpedantic -MD -MT src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-mec-gateway.cc.o -MF src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-mec-gateway.cc.o.d -o src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-mec-gateway.cc.o -c /home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:486:1: error: ‘ArpmecMecGateway’ has not been declared
+  486 | ArpmecMecGateway::FindBestMecGateway(uint32_t excludeCluster)
+      | ^~~~~~~~~~~~~~~~
+In file included from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log.h:13,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/fatal-error.h:13,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/assert.h:42,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/ptr.h:12,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/attribute.h:11,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/attribute-construction-list.h:11,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/object.h:12,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/build/include/ns3/object.h:1,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.h:18,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:9:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: In function ‘uint32_t ns3::FindBestMecGateway(uint32_t)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:488:21: error: invalid use of ‘this’ in non-member function
+  488 |     NS_LOG_FUNCTION(this << excludeCluster);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:494:26: error: ‘m_knownGateways’ was not declared in this scope
+  494 |     for (auto& gateway : m_knownGateways)
+      |                          ^~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:497:9: error: ‘GatewayInfo’ was not declared in this scope; did you mean ‘gatewayId’?
+  497 |         GatewayInfo& info = gateway.second;
+      |         ^~~~~~~~~~~
+      |         gatewayId
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:497:22: error: ‘info’ was not declared in this scope
+  497 |         GatewayInfo& info = gateway.second;
+      |                      ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:499:26: error: ‘m_gatewayId’ was not declared in this scope; did you mean ‘gatewayId’?
+  499 |         if (gatewayId != m_gatewayId && info.load < minLoad)
+      |                          ^~~~~~~~~~~
+      |                          gatewayId
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:510:1: error: ‘ArpmecMecGateway’ has not been declared
+  510 | ArpmecMecGateway::GetCoveredClusters()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: In function ‘std::vector<unsigned int> ns3::GetCoveredClusters()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:512:21: error: invalid use of ‘this’ in non-member function
+  512 |     NS_LOG_FUNCTION(this);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:517:26: error: ‘m_managedClusters’ was not declared in this scope
+  517 |     for (auto& cluster : m_managedClusters)
+      |                          ^~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:526:1: error: ‘ArpmecMecGateway’ has not been declared
+  526 | ArpmecMecGateway::GetClusterHead(uint32_t clusterId)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: In function ‘uint32_t ns3::GetClusterHead(uint32_t)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:528:21: error: invalid use of ‘this’ in non-member function
+  528 |     NS_LOG_FUNCTION(this << clusterId);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:530:15: error: ‘m_managedClusters’ was not declared in this scope
+  530 |     auto it = m_managedClusters.find(clusterId);
+      |               ^~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:540:1: error: ‘ArpmecMecGateway’ has not been declared
+  540 | ArpmecMecGateway::GetNodeIdFromGatewayId(uint32_t gatewayId)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: In function ‘uint32_t ns3::GetNodeIdFromGatewayId(uint32_t)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:542:21: error: invalid use of ‘this’ in non-member function
+  542 |     NS_LOG_FUNCTION(this << gatewayId);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:550:1: error: ‘ArpmecMecGateway’ has not been declared
+  550 | ArpmecMecGateway::SetSendCallback(Callback<void, Ptr<Packet>, uint32_t> callback)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: In function ‘void ns3::SetSendCallback(Callback<void, Ptr<Packet>, unsigned int>)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:552:5: error: ‘m_sendCallback’ was not declared in this scope; did you mean ‘SetSendCallback’?
+  552 |     m_sendCallback = callback;
+      |     ^~~~~~~~~~~~~~
+      |     SetSendCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:556:1: error: ‘ArpmecMecGateway’ has not been declared
+  556 | ArpmecMecGateway::AddKnownGateway(uint32_t gatewayId, double load)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: In function ‘void ns3::AddKnownGateway(uint32_t, double)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:558:21: error: invalid use of ‘this’ in non-member function
+  558 |     NS_LOG_FUNCTION(this << gatewayId << load);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:560:5: error: ‘GatewayInfo’ was not declared in this scope; did you mean ‘gatewayId’?
+  560 |     GatewayInfo info;
+      |     ^~~~~~~~~~~
+      |     gatewayId
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:561:5: error: ‘info’ was not declared in this scope
+  561 |     info.gatewayId = gatewayId;
+      |     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:565:5: error: ‘m_knownGateways’ was not declared in this scope; did you mean ‘AddKnownGateway’?
+  565 |     m_knownGateways[gatewayId] = info;
+      |     ^~~~~~~~~~~~~~~
+      |     AddKnownGateway
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:567:31: error: ‘m_gatewayId’ was not declared in this scope; did you mean ‘gatewayId’?
+  567 |     NS_LOG_INFO("Gateway " << m_gatewayId << " learned about gateway " << gatewayId
+      |                               ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:567:5: note: in expansion of macro ‘NS_LOG_INFO’
+  567 |     NS_LOG_INFO("Gateway " << m_gatewayId << " learned about gateway " << gatewayId
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-mec-gateway.cc:572:1: error: expected declaration before ‘}’ token
+  572 | } // namespace ns3
+      | ^
+[3/655] Building CXX object src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-routing-protocol.cc.o
+ninja: build stopped: subcommand failed.
+Finished executing the following commands:
+/usr/bin/cmake --build /home/donsoft/ns-allinone-3.43/ns-3.43/cmake-cache -j 3

@@ -7,6 +7,8 @@ build_lib(
     model/arpmec-dpd.cc
     model/arpmec-id-cache.cc
     model/arpmec-lqe.cc
+    model/arpmec-mec-gateway.cc
+    model/arpmec-mec-server.cc
     model/arpmec-neighbor.cc
     model/arpmec-packet.cc
     model/arpmec-routing-protocol.cc
@@ -19,6 +21,8 @@ build_lib(
     model/arpmec-dpd.h
     model/arpmec-id-cache.h
     model/arpmec-lqe.h
+    model/arpmec-mec-gateway.h
+    model/arpmec-mec-server.h
     model/arpmec-neighbor.h
     model/arpmec-packet.h
     model/arpmec-routing-protocol.h

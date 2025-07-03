@@ -24,6 +24,8 @@
 #include "arpmec-lqe.h"
 #include "arpmec-clustering.h"
 #include "arpmec-adaptive-routing.h"
+#include "arpmec-mec-gateway.h"
+#include "arpmec-mec-server.h"
 
 #include "ns3/ipv4-interface.h"
 #include "ns3/ipv4-l3-protocol.h"
@@ -262,6 +264,86 @@ class RoutingProtocol : public Ipv4RoutingProtocol
      * \param energyLevel the updated energy level
      */
     void TraceEnergyUpdate(uint32_t nodeId, double energyLevel);
+
+    /**
+     * \brief Enable MEC Gateway functionality on this node
+     * \param gatewayId Unique gateway identifier
+     * \param coverageArea Coverage area in meters
+     */
+    void EnableMecGateway(uint32_t gatewayId, double coverageArea);
+
+    /**
+     * \brief Enable MEC Edge Server functionality on this node
+     * \param serverId Unique server identifier
+     * \param processingCapacity Processing capacity (ops/sec)
+     * \param memoryCapacity Memory capacity (MB)
+     */
+    void EnableMecServer(uint32_t serverId, uint32_t processingCapacity, uint32_t memoryCapacity);
+
+    /**
+     * \brief Get pointer to MEC Gateway (if enabled)
+     * \return Pointer to MEC Gateway or nullptr
+     */
+    Ptr<ArpmecMecGateway> GetMecGateway() const
+    {
+        return m_mecGateway;
+    }
+
+    /**
+     * \brief Get pointer to MEC Server (if enabled)
+     * \return Pointer to MEC Server or nullptr
+     */
+    Ptr<ArpmecMecServer> GetMecServer() const
+    {
+        return m_mecServer;
+    }
+
+    /**
+     * \brief Check if this node is a MEC Gateway
+     * \return True if MEC Gateway is enabled
+     */
+    bool IsMecGateway() const
+    {
+        return m_isMecGateway;
+    }
+
+    /**
+     * \brief Check if this node is a MEC Edge Server
+     * \return True if MEC Server is enabled
+     */
+    bool IsMecServer() const
+    {
+        return m_isMecServer;
+    }
+
+    /**
+     * Handle MEC cluster management operations
+     * \param operation The cluster management operation
+     * \param clusterId The cluster ID involved
+     */
+    void OnMecClusterManagement(ArpmecMecGateway::ClusterOperation operation, uint32_t clusterId);
+
+    /**
+     * Handle MEC task completion
+     * \param taskId The completed task ID
+     * \param clusterId The source cluster ID
+     * \param processingTime Time taken to process the task
+     */
+    void OnMecTaskCompletion(uint32_t taskId, uint32_t clusterId, double processingTime);
+
+    /**
+     * Handle MEC cloud offload requests
+     * \param task The task to be offloaded
+     * \return True if cloud accepts the task
+     */
+    bool OnMecCloudOffload(ArpmecMecServer::ComputationTask task);
+
+    /**
+     * Send packet from MEC Gateway for inter-cluster communication
+     * \param packet The packet to send
+     * \param targetNodeId Target node ID
+     */
+    void SendPacketFromMecGateway(Ptr<Packet> packet, uint32_t targetNodeId);
 
   protected:
     void DoInitialize() override;
@@ -652,6 +734,13 @@ class RoutingProtocol : public Ipv4RoutingProtocol
     TracedCallback<uint32_t, double> m_lqeUpdateTrace;
     /// Trace fired when energy level is updated
     TracedCallback<uint32_t, double> m_energyUpdateTrace;
+
+private:
+    // MEC Infrastructure
+    Ptr<ArpmecMecGateway> m_mecGateway;   ///< MEC Gateway instance
+    Ptr<ArpmecMecServer> m_mecServer;     ///< MEC Server instance
+    bool m_isMecGateway;                  ///< Whether this node is a MEC Gateway
+    bool m_isMecServer;                   ///< Whether this node is a MEC Server
 };
 
 } // namespace arpmec

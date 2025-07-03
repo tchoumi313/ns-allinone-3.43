@@ -179,3 +179,16 @@ build_example(
     ${libapplications}
     ${libmobility}
 )
+
+build_example(
+  NAME arpmec-mec-communication-test
+  SOURCE_FILES arpmec-mec-communication-test.cc
+  LIBRARIES_TO_LINK
+    ${libwifi}
+    ${libarpmec}
+    ${libinternet}
+    ${libapplications}
+    ${libmobility}
+    ${libenergy}
+    ${libnetanim}
+)

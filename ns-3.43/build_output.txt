@@ -1,0 +1,1167 @@
+[0/2] Re-checking globbed directories...
+[1/3] Building CXX object src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-clustering.cc.o
+FAILED: src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-clustering.cc.o 
+/usr/bin/c++ -DHAVE_BOOST -DHAVE_BOOST_UNITS -DHAVE_GSL -DHAVE_LIBXML2 -DHAVE_PACKET_H -DHAVE_SQLITE3 -DNS3_ASSERT_ENABLE -DNS3_BUILD_PROFILE_DEBUG -DNS3_LOG_ENABLE -DPROJECT_SOURCE_PATH=\"/home/donsoft/ns-allinone-3.43/ns-3.43\" -DRAW_SOCK_CREATOR=\"/home/donsoft/ns-allinone-3.43/ns-3.43/build/src/fd-net-device/ns3.43-raw-sock-creator-default\" -DTAP_DEV_CREATOR=\"/home/donsoft/ns-allinone-3.43/ns-3.43/build/src/fd-net-device/ns3.43-tap-device-creator-default\" -D__LINUX__ -Darpmec_EXPORTS -I/home/donsoft/ns-allinone-3.43/ns-3.43/build/include -I/usr -I/usr/include/freetype2 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/gtk-3.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/atk-1.0 -I/usr/include/libxml2 -Os -g -DNDEBUG -std=c++20 -fPIC   -fno-semantic-interposition -fdiagnostics-color=always -Wall -Wpedantic -MD -MT src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-clustering.cc.o -MF src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-clustering.cc.o.d -o src/arpmec/CMakeFiles/arpmec.dir/model/arpmec-clustering.cc.o -c /home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:172:1: error: ‘ArpmecClustering’ has not been declared
+  172 | ArpmecClustering::ProcessJoinMessage(uint32_t senderId, const ArpmecJoinHeader& join)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:172:63: error: ‘ArpmecJoinHeader’ does not name a type
+  172 | ArpmecClustering::ProcessJoinMessage(uint32_t senderId, const ArpmecJoinHeader& join)
+      |                                                               ^~~~~~~~~~~~~~~~
+In file included from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log.h:13,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/fatal-error.h:13,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/assert.h:42,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/ptr.h:12,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/attribute.h:11,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/attribute-construction-list.h:11,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/object.h:12,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/build/include/ns3/object.h:1,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.h:21,
+                 from /home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:9:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::ProcessJoinMessage(uint32_t, const int&)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:174:21: error: invalid use of ‘this’ in non-member function
+  174 |     NS_LOG_FUNCTION(this << senderId << join.GetChId());
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:174:46: error: request for member ‘GetChId’ in ‘join’, which is of non-class type ‘const int’
+  174 |     NS_LOG_FUNCTION(this << senderId << join.GetChId());
+      |                                              ^~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:176:10: error: ‘m_isRunning’ was not declared in this scope
+  176 |     if (!m_isRunning || join.GetChId() != m_nodeId || !IsClusterHead())
+      |          ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:176:30: error: request for member ‘GetChId’ in ‘join’, which is of non-class type ‘const int’
+  176 |     if (!m_isRunning || join.GetChId() != m_nodeId || !IsClusterHead())
+      |                              ^~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:176:43: error: ‘m_nodeId’ was not declared in this scope
+  176 |     if (!m_isRunning || join.GetChId() != m_nodeId || !IsClusterHead())
+      |                                           ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:176:56: error: ‘IsClusterHead’ was not declared in this scope
+  176 |     if (!m_isRunning || join.GetChId() != m_nodeId || !IsClusterHead())
+      |                                                        ^~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:182:5: error: ‘UpdateClusterMember’ was not declared in this scope
+  182 |     UpdateClusterMember(senderId, true);
+      |     ^~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:185:5: error: ‘SendChNotificationMessage’ was not declared in this scope
+  185 |     SendChNotificationMessage();
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:187:72: error: ‘m_nodeId’ was not declared in this scope
+  187 |     NS_LOG_INFO("Node " << senderId << " joined cluster headed by " << m_nodeId);
+      |                                                                        ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:187:5: note: in expansion of macro ‘NS_LOG_INFO’
+  187 |     NS_LOG_INFO("Node " << senderId << " joined cluster headed by " << m_nodeId);
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:190:10: error: ‘m_clusterEventCallback’ was not declared in this scope
+  190 |     if (!m_clusterEventCallback.IsNull())
+      |          ^~~~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:192:32: error: ‘JOINED_CLUSTER’ was not declared in this scope
+  192 |         m_clusterEventCallback(JOINED_CLUSTER, senderId);
+      |                                ^~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:197:1: error: ‘ArpmecClustering’ has not been declared
+  197 | ArpmecClustering::ProcessChNotificationMessage(uint32_t senderId, const ArpmecChNotificationHeader& notification)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:197:73: error: ‘ArpmecChNotificationHeader’ does not name a type
+  197 | ArpmecClustering::ProcessChNotificationMessage(uint32_t senderId, const ArpmecChNotificationHeader& notification)
+      |                                                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::ProcessChNotificationMessage(uint32_t, const int&)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:199:21: error: invalid use of ‘this’ in non-member function
+  199 |     NS_LOG_FUNCTION(this << senderId);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:201:10: error: ‘m_isRunning’ was not declared in this scope
+  201 |     if (!m_isRunning)
+      |          ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:207:5: error: ‘m_neighborClusterHeads’ was not declared in this scope
+  207 |     m_neighborClusterHeads[senderId] = true;
+      |     ^~~~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:208:29: error: ‘m_nodeId’ was not declared in this scope
+  208 |     NS_LOG_DEBUG("Node " << m_nodeId << " learned that neighbor " << senderId << " is a cluster head");
+      |                             ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:208:5: note: in expansion of macro ‘NS_LOG_DEBUG’
+  208 |     NS_LOG_DEBUG("Node " << m_nodeId << " learned that neighbor " << senderId << " is a cluster head");
+      |     ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:211:9: error: ‘m_nodeState’ was not declared in this scope
+  211 |     if (m_nodeState == CLUSTER_MEMBER && m_currentCluster.headId == senderId)
+      |         ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:211:24: error: ‘CLUSTER_MEMBER’ was not declared in this scope
+  211 |     if (m_nodeState == CLUSTER_MEMBER && m_currentCluster.headId == senderId)
+      |                        ^~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:211:42: error: ‘m_currentCluster’ was not declared in this scope
+  211 |     if (m_nodeState == CLUSTER_MEMBER && m_currentCluster.headId == senderId)
+      |                                          ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:216:61: error: request for member ‘GetClusterMembers’ in ‘notification’, which is of non-class type ‘const int’
+  216 |         const std::vector<uint32_t>& members = notification.GetClusterMembers();
+      |                                                             ^~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:225:29: error: ‘ISOLATED’ was not declared in this scope
+  225 |     else if (m_nodeState == ISOLATED || m_nodeState == UNDECIDED)
+      |                             ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:225:56: error: ‘UNDECIDED’ was not declared in this scope
+  225 |     else if (m_nodeState == ISOLATED || m_nodeState == UNDECIDED)
+      |                                                        ^~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:228:13: error: ‘m_lqe’ was not declared in this scope
+  228 |         if (m_lqe)
+      |             ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:233:40: error: ‘m_nodeId’ was not declared in this scope
+  233 |                 NS_LOG_INFO("Node " << m_nodeId << " considering joining cluster " << senderId
+      |                                        ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:233:17: note: in expansion of macro ‘NS_LOG_INFO’
+  233 |                 NS_LOG_INFO("Node " << m_nodeId << " considering joining cluster " << senderId
+      |                 ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:236:17: error: ‘JoinCluster’ was not declared in this scope
+  236 |                 JoinCluster(senderId);
+      |                 ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:243:1: error: ‘ArpmecClustering’ has not been declared
+  243 | ArpmecClustering::ProcessAbdicateMessage(uint32_t senderId, const ArpmecAbdicateHeader& abdicate)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:243:67: error: ‘ArpmecAbdicateHeader’ does not name a type
+  243 | ArpmecClustering::ProcessAbdicateMessage(uint32_t senderId, const ArpmecAbdicateHeader& abdicate)
+      |                                                                   ^~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::ProcessAbdicateMessage(uint32_t, const int&)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:245:21: error: invalid use of ‘this’ in non-member function
+  245 |     NS_LOG_FUNCTION(this << senderId);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:247:10: error: ‘m_isRunning’ was not declared in this scope
+  247 |     if (!m_isRunning)
+      |          ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:253:5: error: ‘m_neighborClusterHeads’ was not declared in this scope
+  253 |     m_neighborClusterHeads[senderId] = false;
+      |     ^~~~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:254:29: error: ‘m_nodeId’ was not declared in this scope
+  254 |     NS_LOG_DEBUG("Node " << m_nodeId << " learned that neighbor " << senderId << " is no longer a cluster head");
+      |                             ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:254:5: note: in expansion of macro ‘NS_LOG_DEBUG’
+  254 |     NS_LOG_DEBUG("Node " << m_nodeId << " learned that neighbor " << senderId << " is no longer a cluster head");
+      |     ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:257:9: error: ‘m_nodeState’ was not declared in this scope
+  257 |     if (m_nodeState == CLUSTER_MEMBER && m_currentCluster.headId == senderId)
+      |         ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:257:24: error: ‘CLUSTER_MEMBER’ was not declared in this scope
+  257 |     if (m_nodeState == CLUSTER_MEMBER && m_currentCluster.headId == senderId)
+      |                        ^~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:257:42: error: ‘m_currentCluster’ was not declared in this scope
+  257 |     if (m_nodeState == CLUSTER_MEMBER && m_currentCluster.headId == senderId)
+      |                                          ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:260:9: error: ‘LeaveCluster’ was not declared in this scope
+  260 |         LeaveCluster();
+      |         ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:263:14: error: ‘m_clusteringTimer’ was not declared in this scope
+  263 |         if (!m_clusteringTimer.IsRunning())
+      |              ^~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:270:1: error: ‘ArpmecClustering’ does not name a type
+  270 | ArpmecClustering::NodeState
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:277:1: error: ‘ArpmecClustering’ has not been declared
+  277 | ArpmecClustering::GetClusterHeadId() const
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:277:38: error: non-member function ‘uint32_t ns3::GetClusterHeadId()’ cannot have cv-qualifier
+  277 | ArpmecClustering::GetClusterHeadId() const
+      |                                      ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘uint32_t ns3::GetClusterHeadId()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:279:9: error: ‘IsClusterHead’ was not declared in this scope; did you mean ‘GetClusterHeadId’?
+  279 |     if (IsClusterHead())
+      |         ^~~~~~~~~~~~~
+      |         GetClusterHeadId
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:281:16: error: ‘m_nodeId’ was not declared in this scope
+  281 |         return m_nodeId;
+      |                ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:283:14: error: ‘IsInCluster’ was not declared in this scope
+  283 |     else if (IsInCluster())
+      |              ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:285:16: error: ‘m_currentCluster’ was not declared in this scope
+  285 |         return m_currentCluster.headId;
+      |                ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:291:1: error: ‘ArpmecClustering’ has not been declared
+  291 | ArpmecClustering::GetClusterMembers() const
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:291:39: error: non-member function ‘std::vector<unsigned int> ns3::GetClusterMembers()’ cannot have cv-qualifier
+  291 | ArpmecClustering::GetClusterMembers() const
+      |                                       ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘std::vector<unsigned int> ns3::GetClusterMembers()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:294:9: error: ‘IsClusterHead’ was not declared in this scope; did you mean ‘GetClusterHeadId’?
+  294 |     if (IsClusterHead())
+      |         ^~~~~~~~~~~~~
+      |         GetClusterHeadId
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:296:32: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+  296 |         for (uint32_t member : m_clusterMembers)
+      |                                ^~~~~~~~~~~~~~~~
+      |                                GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:305:1: error: ‘ArpmecClustering’ has not been declared
+  305 | ArpmecClustering::IsClusterHead() const
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:305:35: error: non-member function ‘bool ns3::IsClusterHead()’ cannot have cv-qualifier
+  305 | ArpmecClustering::IsClusterHead() const
+      |                                   ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘bool ns3::IsClusterHead()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:307:12: error: ‘m_nodeState’ was not declared in this scope
+  307 |     return m_nodeState == CLUSTER_HEAD;
+      |            ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:307:27: error: ‘CLUSTER_HEAD’ was not declared in this scope
+  307 |     return m_nodeState == CLUSTER_HEAD;
+      |                           ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:311:1: error: ‘ArpmecClustering’ has not been declared
+  311 | ArpmecClustering::IsInCluster() const
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:311:33: error: non-member function ‘bool ns3::IsInCluster()’ cannot have cv-qualifier
+  311 | ArpmecClustering::IsInCluster() const
+      |                                 ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘bool ns3::IsInCluster()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:313:12: error: ‘m_nodeState’ was not declared in this scope
+  313 |     return m_nodeState == CLUSTER_MEMBER || m_nodeState == CLUSTER_HEAD;
+      |            ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:313:27: error: ‘CLUSTER_MEMBER’ was not declared in this scope
+  313 |     return m_nodeState == CLUSTER_MEMBER || m_nodeState == CLUSTER_HEAD;
+      |                           ^~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:313:60: error: ‘CLUSTER_HEAD’ was not declared in this scope
+  313 |     return m_nodeState == CLUSTER_MEMBER || m_nodeState == CLUSTER_HEAD;
+      |                                                            ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:317:1: error: ‘ArpmecClustering’ has not been declared
+  317 | ArpmecClustering::SetEnergyLevel(double energy)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::SetEnergyLevel(double)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:319:5: error: ‘m_energyLevel’ was not declared in this scope; did you mean ‘SetEnergyLevel’?
+  319 |     m_energyLevel = std::max(0.0, std::min(1.0, energy));
+      |     ^~~~~~~~~~~~~
+      |     SetEnergyLevel
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:320:81: error: ‘m_nodeId’ was not declared in this scope
+  320 |     NS_LOG_DEBUG("Energy level updated to " << m_energyLevel << " for node " << m_nodeId);
+      |                                                                                 ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:320:5: note: in expansion of macro ‘NS_LOG_DEBUG’
+  320 |     NS_LOG_DEBUG("Energy level updated to " << m_energyLevel << " for node " << m_nodeId);
+      |     ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:324:1: error: ‘ArpmecClustering’ has not been declared
+  324 | ArpmecClustering::GetEnergyLevel() const
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:324:36: error: non-member function ‘double ns3::GetEnergyLevel()’ cannot have cv-qualifier
+  324 | ArpmecClustering::GetEnergyLevel() const
+      |                                    ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘double ns3::GetEnergyLevel()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:326:12: error: ‘m_energyLevel’ was not declared in this scope; did you mean ‘SetEnergyLevel’?
+  326 |     return m_energyLevel;
+      |            ^~~~~~~~~~~~~
+      |            SetEnergyLevel
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:330:1: error: ‘ArpmecClustering’ has not been declared
+  330 | ArpmecClustering::SetEnergyThreshold(double threshold)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::SetEnergyThreshold(double)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:332:5: error: ‘m_energyThreshold’ was not declared in this scope; did you mean ‘SetEnergyThreshold’?
+  332 |     m_energyThreshold = std::max(0.0, std::min(1.0, threshold));
+      |     ^~~~~~~~~~~~~~~~~
+      |     SetEnergyThreshold
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:336:1: error: ‘ArpmecClustering’ has not been declared
+  336 | ArpmecClustering::SetClusterEventCallback(Callback<void, ClusterEvent, uint32_t> callback)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:336:58: error: ‘ClusterEvent’ was not declared in this scope
+  336 | ArpmecClustering::SetClusterEventCallback(Callback<void, ClusterEvent, uint32_t> callback)
+      |                                                          ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:336:80: error: template argument 2 is invalid
+  336 | ArpmecClustering::SetClusterEventCallback(Callback<void, ClusterEvent, uint32_t> callback)
+      |                                                                                ^
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::SetClusterEventCallback(int)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:338:5: error: ‘m_clusterEventCallback’ was not declared in this scope; did you mean ‘SetClusterEventCallback’?
+  338 |     m_clusterEventCallback = callback;
+      |     ^~~~~~~~~~~~~~~~~~~~~~
+      |     SetClusterEventCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:342:1: error: ‘ArpmecClustering’ has not been declared
+  342 | ArpmecClustering::SetSendPacketCallback(Callback<void, Ptr<Packet>, uint32_t> callback)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::SetSendPacketCallback(Callback<void, Ptr<Packet>, unsigned int>)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:344:5: error: ‘m_sendPacketCallback’ was not declared in this scope; did you mean ‘SetSendPacketCallback’?
+  344 |     m_sendPacketCallback = callback;
+      |     ^~~~~~~~~~~~~~~~~~~~
+      |     SetSendPacketCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:345:61: error: ‘m_nodeId’ was not declared in this scope
+  345 |     NS_LOG_INFO("SetSendPacketCallback called for node " << m_nodeId
+      |                                                             ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:345:5: note: in expansion of macro ‘NS_LOG_INFO’
+  345 |     NS_LOG_INFO("SetSendPacketCallback called for node " << m_nodeId
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:352:1: error: ‘ArpmecClustering’ has not been declared
+  352 | ArpmecClustering::ExecuteClusteringAlgorithm()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::ExecuteClusteringAlgorithm()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:354:21: error: invalid use of ‘this’ in non-member function
+  354 |     NS_LOG_FUNCTION(this);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:356:10: error: ‘m_isRunning’ was not declared in this scope
+  356 |     if (!m_isRunning || !m_lqe)
+      |          ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:356:26: error: ‘m_lqe’ was not declared in this scope
+  356 |     if (!m_isRunning || !m_lqe)
+      |                          ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:364:9: error: ‘ShouldBecomeClusterHead’ was not declared in this scope
+  364 |     if (ShouldBecomeClusterHead())
+      |         ^~~~~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:367:13: error: ‘m_nodeState’ was not declared in this scope
+  367 |         if (m_nodeState != CLUSTER_HEAD)
+      |             ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:367:28: error: ‘CLUSTER_HEAD’ was not declared in this scope
+  367 |         if (m_nodeState != CLUSTER_HEAD)
+      |                            ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:369:13: error: ‘BecomeClusterHead’ was not declared in this scope; did you mean ‘IsClusterHead’?
+  369 |             BecomeClusterHead();
+      |             ^~~~~~~~~~~~~~~~~
+      |             IsClusterHead
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:375:27: error: ‘SelectBestClusterHead’ was not declared in this scope
+  375 |         uint32_t bestCh = SelectBestClusterHead();
+      |                           ^~~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:380:17: error: ‘m_nodeState’ was not declared in this scope
+  380 |             if (m_nodeState != CLUSTER_MEMBER || m_currentCluster.headId != bestCh)
+      |                 ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:380:32: error: ‘CLUSTER_MEMBER’ was not declared in this scope
+  380 |             if (m_nodeState != CLUSTER_MEMBER || m_currentCluster.headId != bestCh)
+      |                                ^~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:380:50: error: ‘m_currentCluster’ was not declared in this scope
+  380 |             if (m_nodeState != CLUSTER_MEMBER || m_currentCluster.headId != bestCh)
+      |                                                  ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:382:40: error: ‘m_nodeId’ was not declared in this scope
+  382 |                 NS_LOG_INFO("Node " << m_nodeId << " - Decision: JOIN CLUSTER " << bestCh);
+      |                                        ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:382:17: note: in expansion of macro ‘NS_LOG_INFO’
+  382 |                 NS_LOG_INFO("Node " << m_nodeId << " - Decision: JOIN CLUSTER " << bestCh);
+      |                 ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:383:17: error: ‘JoinCluster’ was not declared in this scope; did you mean ‘IsInCluster’?
+  383 |                 JoinCluster(bestCh);
+      |                 ^~~~~~~~~~~
+      |                 IsInCluster
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:391:40: error: ‘m_nodeId’ was not declared in this scope
+  391 |                 NS_LOG_INFO("Node " << m_nodeId << " - Decision: BECOME CLUSTER HEAD (no suitable CH found)");
+      |                                        ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:391:17: note: in expansion of macro ‘NS_LOG_INFO’
+  391 |                 NS_LOG_INFO("Node " << m_nodeId << " - Decision: BECOME CLUSTER HEAD (no suitable CH found)");
+      |                 ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:392:17: error: ‘BecomeClusterHead’ was not declared in this scope; did you mean ‘IsClusterHead’?
+  392 |                 BecomeClusterHead();
+      |                 ^~~~~~~~~~~~~~~~~
+      |                 IsClusterHead
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:396:17: error: ‘m_nodeState’ was not declared in this scope
+  396 |                 m_nodeState = ISOLATED;
+      |                 ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:396:31: error: ‘ISOLATED’ was not declared in this scope
+  396 |                 m_nodeState = ISOLATED;
+      |                               ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:397:40: error: ‘m_nodeId’ was not declared in this scope
+  397 |                 NS_LOG_INFO("Node " << m_nodeId << " - Decision: REMAIN ISOLATED");
+      |                                        ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:397:17: note: in expansion of macro ‘NS_LOG_INFO’
+  397 |                 NS_LOG_INFO("Node " << m_nodeId << " - Decision: REMAIN ISOLATED");
+      |                 ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:403:9: error: ‘m_isRunning’ was not declared in this scope
+  403 |     if (m_isRunning && !m_clusteringTimer.IsRunning())
+      |         ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:403:25: error: ‘m_clusteringTimer’ was not declared in this scope
+  403 |     if (m_isRunning && !m_clusteringTimer.IsRunning())
+      |                         ^~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:405:36: error: ‘m_clusteringInterval’ was not declared in this scope
+  405 |         m_clusteringTimer.Schedule(m_clusteringInterval);
+      |                                    ^~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:410:1: error: ‘ArpmecClustering’ has not been declared
+  410 | ArpmecClustering::ShouldBecomeClusterHead()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘bool ns3::ShouldBecomeClusterHead()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:412:21: error: invalid use of ‘this’ in non-member function
+  412 |     NS_LOG_FUNCTION(this << "Energy:" << m_energyLevel << "Threshold:" << m_energyThreshold);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:412:42: error: ‘m_energyLevel’ was not declared in this scope; did you mean ‘SetEnergyLevel’?
+  412 |     NS_LOG_FUNCTION(this << "Energy:" << m_energyLevel << "Threshold:" << m_energyThreshold);
+      |                                          ^~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:412:75: error: ‘m_energyThreshold’ was not declared in this scope; did you mean ‘SetEnergyThreshold’?
+  412 |     NS_LOG_FUNCTION(this << "Energy:" << m_energyLevel << "Threshold:" << m_energyThreshold);
+      |                                                                           ^~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:419:25: error: ‘m_energyThreshold’ was not declared in this scope; did you mean ‘SetEnergyThreshold’?
+  419 |     if (m_energyLevel < m_energyThreshold)
+      |                         ^~~~~~~~~~~~~~~~~
+      |                         SetEnergyThreshold
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:419:9: error: ‘m_energyLevel’ was not declared in this scope; did you mean ‘SetEnergyLevel’?
+  419 |     if (m_energyLevel < m_energyThreshold)
+      |         ^~~~~~~~~~~~~
+      |         SetEnergyLevel
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:421:32: error: ‘m_nodeId’ was not declared in this scope
+  421 |         NS_LOG_INFO("Node " << m_nodeId << " - Energy too low: " << m_energyLevel << " < " << m_energyThreshold);
+      |                                ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:421:9: note: in expansion of macro ‘NS_LOG_INFO’
+  421 |         NS_LOG_INFO("Node " << m_nodeId << " - Energy too low: " << m_energyLevel << " < " << m_energyThreshold);
+      |         ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:425:10: error: ‘m_lqe’ was not declared in this scope
+  425 |     if (!m_lqe)
+      |          ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:427:32: error: ‘m_nodeId’ was not declared in this scope
+  427 |         NS_LOG_INFO("Node " << m_nodeId << " - LQE not available");
+      |                                ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:427:9: note: in expansion of macro ‘NS_LOG_INFO’
+  427 |         NS_LOG_INFO("Node " << m_nodeId << " - LQE not available");
+      |         ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:432:39: error: ‘m_lqe’ was not declared in this scope
+  432 |     std::vector<uint32_t> neighbors = m_lqe->GetNeighborsByQuality();
+      |                                       ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:437:43: error: ‘m_startTime’ was not declared in this scope
+  437 |         Time elapsed = Simulator::Now() - m_startTime;
+      |                                           ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:439:29: error: ‘m_nodeId’ was not declared in this scope
+  439 |         double nodeDelay = (m_nodeId % 10) * 0.5; // 0-4.5 second stagger
+      |                             ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:462:33: error: ‘m_nodeId’ was not declared in this scope
+  462 |         NS_LOG_DEBUG("Node " << m_nodeId << " - No valid neighbors");
+      |                                 ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:462:9: note: in expansion of macro ‘NS_LOG_DEBUG’
+  462 |         NS_LOG_DEBUG("Node " << m_nodeId << " - No valid neighbors");
+      |         ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:471:33: error: ‘m_nodeId’ was not declared in this scope
+  471 |         NS_LOG_DEBUG("Node " << m_nodeId << " - Low link quality: " << avgLinkQuality << " < 0.5");
+      |                                 ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:471:9: note: in expansion of macro ‘NS_LOG_DEBUG’
+  471 |         NS_LOG_DEBUG("Node " << m_nodeId << " - Low link quality: " << avgLinkQuality << " < 0.5");
+      |         ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:476:35: error: ‘CountNearbyClusterHeads’ was not declared in this scope; did you mean ‘nearbyClusterHeads’?
+  476 |     uint32_t nearbyClusterHeads = CountNearbyClusterHeads();
+      |                                   ^~~~~~~~~~~~~~~~~~~~~~~
+      |                                   nearbyClusterHeads
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:483:31: error: ‘m_energyLevel’ was not declared in this scope; did you mean ‘SetEnergyLevel’?
+  483 |     double decisionPriority = m_energyLevel + avgLinkQuality + (validNeighbors * 0.1);
+      |                               ^~~~~~~~~~~~~
+      |                               SetEnergyLevel
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:484:26: error: ‘m_nodeId’ was not declared in this scope
+  484 |     double nodeOffset = (m_nodeId % 20) * 0.1; // 0-1.9 second stagger based on node ID
+      |                          ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:485:39: error: ‘m_startTime’ was not declared in this scope
+  485 |     Time elapsed = Simulator::Now() - m_startTime;
+      |                                       ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:523:1: error: ‘ArpmecClustering’ has not been declared
+  523 | ArpmecClustering::SelectBestClusterHead()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘uint32_t ns3::SelectBestClusterHead()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:525:10: error: ‘m_lqe’ was not declared in this scope
+  525 |     if (!m_lqe)
+      |          ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:531:39: error: ‘m_lqe’ was not declared in this scope
+  531 |     std::vector<uint32_t> neighbors = m_lqe->GetNeighborsByQuality();
+      |                                       ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:573:33: error: ‘m_nodeId’ was not declared in this scope
+  573 |         NS_LOG_DEBUG("Node " << m_nodeId << " selecting CH " << bestCH << " with score " << bestScore);
+      |                                 ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:573:9: note: in expansion of macro ‘NS_LOG_DEBUG’
+  573 |         NS_LOG_DEBUG("Node " << m_nodeId << " selecting CH " << bestCH << " with score " << bestScore);
+      |         ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:577:33: error: ‘m_nodeId’ was not declared in this scope
+  577 |         NS_LOG_DEBUG("Node " << m_nodeId << " - no suitable cluster head found");
+      |                                 ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:577:9: note: in expansion of macro ‘NS_LOG_DEBUG’
+  577 |         NS_LOG_DEBUG("Node " << m_nodeId << " - no suitable cluster head found");
+      |         ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:584:1: error: ‘ArpmecClustering’ has not been declared
+  584 | ArpmecClustering::CountNearbyClusterHeads()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘uint32_t ns3::CountNearbyClusterHeads()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:586:10: error: ‘m_lqe’ was not declared in this scope
+  586 |     if (!m_lqe)
+      |          ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:592:39: error: ‘m_lqe’ was not declared in this scope
+  592 |     std::vector<uint32_t> neighbors = m_lqe->GetNeighborsByQuality();
+      |                                       ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:603:23: error: ‘m_neighborClusterHeads’ was not declared in this scope
+  603 |             auto it = m_neighborClusterHeads.find(neighbor);
+      |                       ^~~~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:607:41: error: ‘m_nodeId’ was not declared in this scope
+  607 |                 NS_LOG_DEBUG("Node " << m_nodeId << " detected neighbor " << neighbor << " as cluster head");
+      |                                         ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:607:17: note: in expansion of macro ‘NS_LOG_DEBUG’
+  607 |                 NS_LOG_DEBUG("Node " << m_nodeId << " detected neighbor " << neighbor << " as cluster head");
+      |                 ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:612:29: error: ‘m_nodeId’ was not declared in this scope
+  612 |     NS_LOG_DEBUG("Node " << m_nodeId << " counted " << count << " nearby cluster heads");
+      |                             ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:612:5: note: in expansion of macro ‘NS_LOG_DEBUG’
+  612 |     NS_LOG_DEBUG("Node " << m_nodeId << " counted " << count << " nearby cluster heads");
+      |     ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:617:1: error: ‘ArpmecClustering’ has not been declared
+  617 | ArpmecClustering::BecomeClusterHead()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::BecomeClusterHead()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:619:21: error: invalid use of ‘this’ in non-member function
+  619 |     NS_LOG_FUNCTION(this);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:624:9: error: ‘LeaveCluster’ was not declared in this scope
+  624 |         LeaveCluster();
+      |         ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:627:5: error: ‘m_nodeState’ was not declared in this scope
+  627 |     m_nodeState = CLUSTER_HEAD;
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:627:19: error: ‘CLUSTER_HEAD’ was not declared in this scope
+  627 |     m_nodeState = CLUSTER_HEAD;
+      |                   ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:628:5: error: ‘m_currentCluster’ was not declared in this scope
+  628 |     m_currentCluster.headId = m_nodeId;
+      |     ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:628:31: error: ‘m_nodeId’ was not declared in this scope
+  628 |     m_currentCluster.headId = m_nodeId;
+      |                               ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:632:5: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+  632 |     m_clusterMembers.clear();
+      |     ^~~~~~~~~~~~~~~~
+      |     GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:635:5: error: ‘SendChNotificationMessage’ was not declared in this scope; did you mean ‘ProcessChNotificationMessage’?
+  635 |     SendChNotificationMessage();
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~
+      |     ProcessChNotificationMessage
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:640:10: error: ‘m_clusterEventCallback’ was not declared in this scope; did you mean ‘SetClusterEventCallback’?
+  640 |     if (!m_clusterEventCallback.IsNull())
+      |          ^~~~~~~~~~~~~~~~~~~~~~
+      |          SetClusterEventCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:642:32: error: ‘CH_ELECTED’ was not declared in this scope
+  642 |         m_clusterEventCallback(CH_ELECTED, m_nodeId);
+      |                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:647:1: error: ‘ArpmecClustering’ has not been declared
+  647 | ArpmecClustering::JoinCluster(uint32_t headId)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::JoinCluster(uint32_t)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:649:21: error: invalid use of ‘this’ in non-member function
+  649 |     NS_LOG_FUNCTION(this << headId);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:654:9: error: ‘LeaveCluster’ was not declared in this scope
+  654 |         LeaveCluster();
+      |         ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:657:5: error: ‘m_nodeState’ was not declared in this scope
+  657 |     m_nodeState = CLUSTER_MEMBER;
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:657:19: error: ‘CLUSTER_MEMBER’ was not declared in this scope
+  657 |     m_nodeState = CLUSTER_MEMBER;
+      |                   ^~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:658:5: error: ‘m_currentCluster’ was not declared in this scope
+  658 |     m_currentCluster.headId = headId;
+      |     ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:660:38: error: ‘m_lqe’ was not declared in this scope
+  660 |     m_currentCluster.headLinkScore = m_lqe ? m_lqe->PredictLinkScore(headId) : 0.0;
+      |                                      ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:663:5: error: ‘SendJoinMessage’ was not declared in this scope; did you mean ‘ProcessJoinMessage’?
+  663 |     SendJoinMessage(headId);
+      |     ^~~~~~~~~~~~~~~
+      |     ProcessJoinMessage
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:665:28: error: ‘m_nodeId’ was not declared in this scope
+  665 |     NS_LOG_INFO("Node " << m_nodeId << " joined cluster headed by " << headId);
+      |                            ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:665:5: note: in expansion of macro ‘NS_LOG_INFO’
+  665 |     NS_LOG_INFO("Node " << m_nodeId << " joined cluster headed by " << headId);
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:668:10: error: ‘m_clusterEventCallback’ was not declared in this scope; did you mean ‘SetClusterEventCallback’?
+  668 |     if (!m_clusterEventCallback.IsNull())
+      |          ^~~~~~~~~~~~~~~~~~~~~~
+      |          SetClusterEventCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:670:32: error: ‘JOINED_CLUSTER’ was not declared in this scope
+  670 |         m_clusterEventCallback(JOINED_CLUSTER, headId);
+      |                                ^~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:675:1: error: ‘ArpmecClustering’ has not been declared
+  675 | ArpmecClustering::LeaveCluster()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::LeaveCluster()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:677:21: error: invalid use of ‘this’ in non-member function
+  677 |     NS_LOG_FUNCTION(this);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:689:9: error: ‘SendAbdicateMessage’ was not declared in this scope; did you mean ‘ProcessAbdicateMessage’?
+  689 |         SendAbdicateMessage();
+      |         ^~~~~~~~~~~~~~~~~~~
+      |         ProcessAbdicateMessage
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:690:9: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+  690 |         m_clusterMembers.clear();
+      |         ^~~~~~~~~~~~~~~~
+      |         GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:693:5: error: ‘m_nodeState’ was not declared in this scope
+  693 |     m_nodeState = UNDECIDED;
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:693:19: error: ‘UNDECIDED’ was not declared in this scope
+  693 |     m_nodeState = UNDECIDED;
+      |                   ^~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:694:5: error: ‘m_currentCluster’ was not declared in this scope
+  694 |     m_currentCluster = ClusterInfo();
+      |     ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:694:24: error: ‘ClusterInfo’ was not declared in this scope
+  694 |     m_currentCluster = ClusterInfo();
+      |                        ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:696:28: error: ‘m_nodeId’ was not declared in this scope
+  696 |     NS_LOG_INFO("Node " << m_nodeId << " left cluster");
+      |                            ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:696:5: note: in expansion of macro ‘NS_LOG_INFO’
+  696 |     NS_LOG_INFO("Node " << m_nodeId << " left cluster");
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:699:10: error: ‘m_clusterEventCallback’ was not declared in this scope; did you mean ‘SetClusterEventCallback’?
+  699 |     if (!m_clusterEventCallback.IsNull())
+      |          ^~~~~~~~~~~~~~~~~~~~~~
+      |          SetClusterEventCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:701:32: error: ‘LEFT_CLUSTER’ was not declared in this scope
+  701 |         m_clusterEventCallback(LEFT_CLUSTER, oldHeadId);
+      |                                ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:706:1: error: ‘ArpmecClustering’ has not been declared
+  706 | ArpmecClustering::SendJoinMessage(uint32_t headId)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::SendJoinMessage(uint32_t)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:708:21: error: invalid use of ‘this’ in non-member function
+  708 |     NS_LOG_FUNCTION(this << headId);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:710:9: error: ‘m_sendPacketCallback’ was not declared in this scope; did you mean ‘SetSendPacketCallback’?
+  710 |     if (m_sendPacketCallback.IsNull())
+      |         ^~~~~~~~~~~~~~~~~~~~
+      |         SetSendPacketCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:719:5: error: ‘TypeHeader’ was not declared in this scope; did you mean ‘ns3::arpmec::TypeHeader’?
+  719 |     TypeHeader typeHeader(ARPMEC_JOIN);
+      |     ^~~~~~~~~~
+      |     ns3::arpmec::TypeHeader
+In file included from /home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.h:28:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-packet.h:58:7: note: ‘ns3::arpmec::TypeHeader’ declared here
+   58 | class TypeHeader : public Header
+      |       ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:720:23: error: ‘typeHeader’ was not declared in this scope; did you mean ‘Header’?
+  720 |     packet->AddHeader(typeHeader);
+      |                       ^~~~~~~~~~
+      |                       Header
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:723:5: error: ‘ArpmecJoinHeader’ was not declared in this scope; did you mean ‘ns3::arpmec::ArpmecJoinHeader’?
+  723 |     ArpmecJoinHeader joinHeader;
+      |     ^~~~~~~~~~~~~~~~
+      |     ns3::arpmec::ArpmecJoinHeader
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-packet.h:834:7: note: ‘ns3::arpmec::ArpmecJoinHeader’ declared here
+  834 | class ArpmecJoinHeader : public Header
+      |       ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:724:5: error: ‘joinHeader’ was not declared in this scope; did you mean ‘Header’?
+  724 |     joinHeader.SetNodeId(m_nodeId);
+      |     ^~~~~~~~~~
+      |     Header
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:724:26: error: ‘m_nodeId’ was not declared in this scope
+  724 |     joinHeader.SetNodeId(m_nodeId);
+      |                          ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:729:5: error: ‘m_sendPacketCallback’ was not declared in this scope; did you mean ‘SetSendPacketCallback’?
+  729 |     m_sendPacketCallback(packet, headId);
+      |     ^~~~~~~~~~~~~~~~~~~~
+      |     SetSendPacketCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:735:1: error: ‘ArpmecClustering’ has not been declared
+  735 | ArpmecClustering::SendChNotificationMessage()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::SendChNotificationMessage()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:737:21: error: invalid use of ‘this’ in non-member function
+  737 |     NS_LOG_FUNCTION(this);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:741:69: error: ‘m_nodeId’ was not declared in this scope
+  741 |         NS_LOG_WARN("SendChNotificationMessage called but node " << m_nodeId << " is not cluster head");
+      |                                                                     ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:741:9: note: in expansion of macro ‘NS_LOG_WARN’
+  741 |         NS_LOG_WARN("SendChNotificationMessage called but node " << m_nodeId << " is not cluster head");
+      |         ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:745:9: error: ‘m_sendPacketCallback’ was not declared in this scope; did you mean ‘SetSendPacketCallback’?
+  745 |     if (m_sendPacketCallback.IsNull())
+      |         ^~~~~~~~~~~~~~~~~~~~
+      |         SetSendPacketCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:747:113: error: ‘m_nodeId’ was not declared in this scope
+  747 |         NS_LOG_ERROR("CRITICAL: SendChNotificationMessage called but m_sendPacketCallback is NULL for node " << m_nodeId);
+      |                                                                                                                 ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:747:9: note: in expansion of macro ‘NS_LOG_ERROR’
+  747 |         NS_LOG_ERROR("CRITICAL: SendChNotificationMessage called but m_sendPacketCallback is NULL for node " << m_nodeId);
+      |         ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:751:28: error: ‘m_nodeId’ was not declared in this scope
+  751 |     NS_LOG_INFO("Node " << m_nodeId << " sending CH_NOTIFICATION message");
+      |                            ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:751:5: note: in expansion of macro ‘NS_LOG_INFO’
+  751 |     NS_LOG_INFO("Node " << m_nodeId << " sending CH_NOTIFICATION message");
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:757:5: error: ‘TypeHeader’ was not declared in this scope; did you mean ‘ns3::arpmec::TypeHeader’?
+  757 |     TypeHeader typeHeader(ARPMEC_CH_NOTIFICATION);
+      |     ^~~~~~~~~~
+      |     ns3::arpmec::TypeHeader
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-packet.h:58:7: note: ‘ns3::arpmec::TypeHeader’ declared here
+   58 | class TypeHeader : public Header
+      |       ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:758:23: error: ‘typeHeader’ was not declared in this scope; did you mean ‘Header’?
+  758 |     packet->AddHeader(typeHeader);
+      |                       ^~~~~~~~~~
+      |                       Header
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:761:5: error: ‘ArpmecChNotificationHeader’ was not declared in this scope; did you mean ‘ns3::arpmec::ArpmecChNotificationHeader’?
+  761 |     ArpmecChNotificationHeader notificationHeader;
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~
+      |     ns3::arpmec::ArpmecChNotificationHeader
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-packet.h:924:7: note: ‘ns3::arpmec::ArpmecChNotificationHeader’ declared here
+  924 | class ArpmecChNotificationHeader : public Header
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:762:5: error: ‘notificationHeader’ was not declared in this scope
+  762 |     notificationHeader.SetChId(m_nodeId);
+      |     ^~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:762:32: error: ‘m_nodeId’ was not declared in this scope
+  762 |     notificationHeader.SetChId(m_nodeId);
+      |                                ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:766:28: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+  766 |     for (uint32_t member : m_clusterMembers)
+      |                            ^~~~~~~~~~~~~~~~
+      |                            GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:774:5: error: ‘m_sendPacketCallback’ was not declared in this scope; did you mean ‘SetSendPacketCallback’?
+  774 |     m_sendPacketCallback(packet, 0); // 0 means broadcast
+      |     ^~~~~~~~~~~~~~~~~~~~
+      |     SetSendPacketCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:777:18: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+  777 |                  m_clusterMembers.size() << " members");
+      |                  ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:776:5: note: in expansion of macro ‘NS_LOG_DEBUG’
+  776 |     NS_LOG_DEBUG("Sent CH_NOTIFICATION from " << m_nodeId << " with " <<
+      |     ^~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:781:1: error: ‘ArpmecClustering’ has not been declared
+  781 | ArpmecClustering::SendAbdicateMessage()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::SendAbdicateMessage()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:783:21: error: invalid use of ‘this’ in non-member function
+  783 |     NS_LOG_FUNCTION(this);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:785:29: error: ‘m_sendPacketCallback’ was not declared in this scope; did you mean ‘SetSendPacketCallback’?
+  785 |     if (!IsClusterHead() || m_sendPacketCallback.IsNull())
+      |                             ^~~~~~~~~~~~~~~~~~~~
+      |                             SetSendPacketCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:794:5: error: ‘TypeHeader’ was not declared in this scope; did you mean ‘ns3::arpmec::TypeHeader’?
+  794 |     TypeHeader typeHeader(ARPMEC_ABDICATE);
+      |     ^~~~~~~~~~
+      |     ns3::arpmec::TypeHeader
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-packet.h:58:7: note: ‘ns3::arpmec::TypeHeader’ declared here
+   58 | class TypeHeader : public Header
+      |       ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:795:23: error: ‘typeHeader’ was not declared in this scope; did you mean ‘Header’?
+  795 |     packet->AddHeader(typeHeader);
+      |                       ^~~~~~~~~~
+      |                       Header
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:798:5: error: ‘ArpmecAbdicateHeader’ was not declared in this scope; did you mean ‘ns3::arpmec::ArpmecAbdicateHeader’?
+  798 |     ArpmecAbdicateHeader abdicateHeader;
+      |     ^~~~~~~~~~~~~~~~~~~~
+      |     ns3::arpmec::ArpmecAbdicateHeader
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-packet.h:1216:7: note: ‘ns3::arpmec::ArpmecAbdicateHeader’ declared here
+ 1216 | class ArpmecAbdicateHeader : public Header
+      |       ^~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:799:5: error: ‘abdicateHeader’ was not declared in this scope
+  799 |     abdicateHeader.SetChId(m_nodeId);
+      |     ^~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:799:28: error: ‘m_nodeId’ was not declared in this scope
+  799 |     abdicateHeader.SetChId(m_nodeId);
+      |                            ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:803:5: error: ‘m_sendPacketCallback’ was not declared in this scope; did you mean ‘SetSendPacketCallback’?
+  803 |     m_sendPacketCallback(packet, 0); // 0 means broadcast
+      |     ^~~~~~~~~~~~~~~~~~~~
+      |     SetSendPacketCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:809:1: error: ‘ArpmecClustering’ has not been declared
+  809 | ArpmecClustering::CheckClusterMaintenance()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::CheckClusterMaintenance()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:811:21: error: invalid use of ‘this’ in non-member function
+  811 |     NS_LOG_FUNCTION(this);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:813:10: error: ‘m_isRunning’ was not declared in this scope
+  813 |     if (!m_isRunning)
+      |          ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:821:9: error: ‘m_nodeState’ was not declared in this scope
+  821 |     if (m_nodeState == CLUSTER_MEMBER)
+      |         ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:821:24: error: ‘CLUSTER_MEMBER’ was not declared in this scope
+  821 |     if (m_nodeState == CLUSTER_MEMBER)
+      |                        ^~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:823:20: error: ‘m_currentCluster’ was not declared in this scope
+  823 |         if ((now - m_currentCluster.lastUpdate) > m_memberTimeout)
+      |                    ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:823:51: error: ‘m_memberTimeout’ was not declared in this scope
+  823 |         if ((now - m_currentCluster.lastUpdate) > m_memberTimeout)
+      |                                                   ^~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:825:61: error: ‘m_nodeId’ was not declared in this scope
+  825 |             NS_LOG_INFO("Cluster head timeout for node " << m_nodeId);
+      |                                                             ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:825:13: note: in expansion of macro ‘NS_LOG_INFO’
+  825 |             NS_LOG_INFO("Cluster head timeout for node " << m_nodeId);
+      |             ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:826:13: error: ‘HandleClusterHeadTimeout’ was not declared in this scope
+  826 |             HandleClusterHeadTimeout();
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:833:9: error: ‘CleanupInactiveMembers’ was not declared in this scope
+  833 |         CleanupInactiveMembers();
+      |         ^~~~~~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:837:9: error: ‘m_isRunning’ was not declared in this scope
+  837 |     if (m_isRunning && !m_maintenanceTimer.IsRunning())
+      |         ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:837:25: error: ‘m_maintenanceTimer’ was not declared in this scope
+  837 |     if (m_isRunning && !m_maintenanceTimer.IsRunning())
+      |                         ^~~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:839:37: error: ‘m_memberTimeout’ was not declared in this scope
+  839 |         m_maintenanceTimer.Schedule(m_memberTimeout / 2);
+      |                                     ^~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:844:1: error: ‘ArpmecClustering’ has not been declared
+  844 | ArpmecClustering::HandleClusterHeadTimeout()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::HandleClusterHeadTimeout()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:846:21: error: invalid use of ‘this’ in non-member function
+  846 |     NS_LOG_FUNCTION(this);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:852:10: error: ‘m_clusteringTimer’ was not declared in this scope
+  852 |     if (!m_clusteringTimer.IsRunning())
+      |          ^~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:859:1: error: ‘ArpmecClustering’ has not been declared
+  859 | ArpmecClustering::UpdateClusterMember(uint32_t memberId, bool isJoining)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::UpdateClusterMember(uint32_t, bool)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:861:21: error: invalid use of ‘this’ in non-member function
+  861 |     NS_LOG_FUNCTION(this << memberId << isJoining);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:870:9: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+  870 |         m_clusterMembers.insert(memberId);
+      |         ^~~~~~~~~~~~~~~~
+      |         GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:875:9: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+  875 |         m_clusterMembers.erase(memberId);
+      |         ^~~~~~~~~~~~~~~~
+      |         GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:881:1: error: ‘ArpmecClustering’ has not been declared
+  881 | ArpmecClustering::CleanupInactiveMembers()
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::CleanupInactiveMembers()’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:883:21: error: invalid use of ‘this’ in non-member function
+  883 |     NS_LOG_FUNCTION(this);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:885:30: error: ‘m_lqe’ was not declared in this scope
+  885 |     if (!IsClusterHead() || !m_lqe)
+      |                              ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:892:28: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+  892 |     for (uint32_t member : m_clusterMembers)
+      |                            ^~~~~~~~~~~~~~~~
+      |                            GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:894:14: error: ‘m_lqe’ was not declared in this scope
+  894 |         if (!m_lqe->IsNeighborActive(member))
+      |              ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:914:1: error: ‘ArpmecClustering’ has not been declared
+  914 | ArpmecClustering::SplitLargeCluster(uint32_t clusterId)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::SplitLargeCluster(uint32_t)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:916:21: error: invalid use of ‘this’ in non-member function
+  916 |     NS_LOG_FUNCTION(this << clusterId);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:919:42: error: ‘m_nodeId’ was not declared in this scope
+  919 |     if (!IsClusterHead() || clusterId != m_nodeId)
+      |                                          ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:925:82: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+  925 |     NS_LOG_INFO("Attempting to split large cluster " << clusterId << " with " << m_clusterMembers.size() << " members");
+      |                                                                                  ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:925:5: note: in expansion of macro ‘NS_LOG_INFO’
+  925 |     NS_LOG_INFO("Attempting to split large cluster " << clusterId << " with " << m_clusterMembers.size() << " members");
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:928:9: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+  928 |     if (m_clusterMembers.size() > 8)
+      |         ^~~~~~~~~~~~~~~~
+      |         GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:936:32: error: ‘m_lqe’ was not declared in this scope
+  936 |             double linkScore = m_lqe->GetLinkScore(member);
+      |                                ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:986:1: error: ‘ArpmecClustering’ has not been declared
+  986 | ArpmecClustering::RebalanceCluster(uint32_t clusterId)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::RebalanceCluster(uint32_t)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:988:21: error: invalid use of ‘this’ in non-member function
+  988 |     NS_LOG_FUNCTION(this << clusterId);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:991:42: error: ‘m_nodeId’ was not declared in this scope
+  991 |     if (!IsClusterHead() || clusterId != m_nodeId)
+      |                                          ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:997:68: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+  997 |     NS_LOG_INFO("Rebalancing cluster " << clusterId << " with " << m_clusterMembers.size() << " members");
+      |                                                                    ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:997:5: note: in expansion of macro ‘NS_LOG_INFO’
+  997 |     NS_LOG_INFO("Rebalancing cluster " << clusterId << " with " << m_clusterMembers.size() << " members");
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1000:48: error: ‘m_lqe’ was not declared in this scope
+ 1000 |     std::vector<uint32_t> nearbyClusterHeads = m_lqe->GetNeighbors();
+      |                                                ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1011:36: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+ 1011 |             for (uint32_t member : m_clusterMembers)
+      |                                    ^~~~~~~~~~~~~~~~
+      |                                    GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1041:1: error: ‘ArpmecClustering’ has not been declared
+ 1041 | ArpmecClustering::OnTaskCompletion(uint32_t taskId, uint32_t clusterId, double processingTime)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::OnTaskCompletion(uint32_t, uint32_t, double)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1043:21: error: invalid use of ‘this’ in non-member function
+ 1043 |     NS_LOG_FUNCTION(this << taskId << clusterId << processingTime);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1045:31: error: ‘m_nodeId’ was not declared in this scope
+ 1045 |     NS_LOG_INFO("Cluster " << m_nodeId << " received task completion notification: "
+      |                               ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1045:5: note: in expansion of macro ‘NS_LOG_INFO’
+ 1045 |     NS_LOG_INFO("Cluster " << m_nodeId << " received task completion notification: "
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1062:17: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+ 1062 |             if (m_clusterMembers.size() > 6)
+      |                 ^~~~~~~~~~~~~~~~
+      |                 GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1070:14: error: ‘m_clusterEventCallback’ was not declared in this scope; did you mean ‘SetClusterEventCallback’?
+ 1070 |         if (!m_clusterEventCallback.IsNull())
+      |              ^~~~~~~~~~~~~~~~~~~~~~
+      |              SetClusterEventCallback
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1072:36: error: ‘TASK_COMPLETED’ was not declared in this scope
+ 1072 |             m_clusterEventCallback(TASK_COMPLETED, taskId);
+      |                                    ^~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1078:1: error: ‘ArpmecClustering’ has not been declared
+ 1078 | ArpmecClustering::CleanupOrphanedCluster(uint32_t clusterId)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::CleanupOrphanedCluster(uint32_t)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1080:21: error: invalid use of ‘this’ in non-member function
+ 1080 |     NS_LOG_FUNCTION(this << clusterId);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1082:31: error: ‘m_nodeId’ was not declared in this scope
+ 1082 |     NS_LOG_INFO("Cluster " << m_nodeId << " cleaning up orphaned cluster: " << clusterId);
+      |                               ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1082:5: note: in expansion of macro ‘NS_LOG_INFO’
+ 1082 |     NS_LOG_INFO("Cluster " << m_nodeId << " cleaning up orphaned cluster: " << clusterId);
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1084:28: error: ‘m_nodeId’ was not declared in this scope
+ 1084 |     if (IsClusterHead() && m_nodeId == clusterId)
+      |                            ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1090:13: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+ 1090 |         if (m_clusterMembers.empty())
+      |             ^~~~~~~~~~~~~~~~
+      |             GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1094:13: error: ‘m_nodeState’ was not declared in this scope
+ 1094 |             m_nodeState = UNDECIDED;
+      |             ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1094:27: error: ‘UNDECIDED’ was not declared in this scope
+ 1094 |             m_nodeState = UNDECIDED;
+      |                           ^~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1095:13: error: ‘m_currentCluster’ was not declared in this scope
+ 1095 |             m_currentCluster = ClusterInfo();
+      |             ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1095:32: error: ‘ClusterInfo’ was not declared in this scope; did you mean ‘clusterId’?
+ 1095 |             m_currentCluster = ClusterInfo();
+      |                                ^~~~~~~~~~~
+      |                                clusterId
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1098:17: error: ‘m_isRunning’ was not declared in this scope
+ 1098 |             if (m_isRunning)
+      |                 ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1100:17: error: ‘m_clusteringTimer’ was not declared in this scope
+ 1100 |                 m_clusteringTimer.Schedule(Seconds(1.0));
+      |                 ^~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1109:14: error: ‘m_currentCluster’ was not declared in this scope
+ 1109 |     else if (m_currentCluster.headId == clusterId)
+      |              ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1116:13: error: ‘m_isRunning’ was not declared in this scope
+ 1116 |         if (m_isRunning)
+      |             ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1118:13: error: ‘m_clusteringTimer’ was not declared in this scope
+ 1118 |             m_clusteringTimer.Schedule(Seconds(0.5));
+      |             ^~~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1124:1: error: ‘ArpmecClustering’ has not been declared
+ 1124 | ArpmecClustering::MergeSmallCluster(uint32_t clusterId)
+      | ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: In function ‘void ns3::MergeSmallCluster(uint32_t)’:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1126:21: error: invalid use of ‘this’ in non-member function
+ 1126 |     NS_LOG_FUNCTION(this << clusterId);
+      |                     ^~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:240:48: note: in definition of macro ‘NS_LOG_FUNCTION’
+  240 |             ns3::ParameterLogger(std::clog) << parameters;                                         \
+      |                                                ^~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1128:31: error: ‘m_nodeId’ was not declared in this scope
+ 1128 |     NS_LOG_INFO("Cluster " << m_nodeId << " attempting to merge small cluster: " << clusterId);
+      |                               ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/core/model/log-macros-enabled.h:182:26: note: in definition of macro ‘NS_LOG’
+  182 |             std::clog << msg << std::endl;                                                         \
+      |                          ^~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1128:5: note: in expansion of macro ‘NS_LOG_INFO’
+ 1128 |     NS_LOG_INFO("Cluster " << m_nodeId << " attempting to merge small cluster: " << clusterId);
+      |     ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1130:28: error: ‘m_nodeId’ was not declared in this scope
+ 1130 |     if (IsClusterHead() && m_nodeId == clusterId)
+      |                            ^~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1133:13: error: ‘m_clusterMembers’ was not declared in this scope; did you mean ‘GetClusterMembers’?
+ 1133 |         if (m_clusterMembers.size() < 3) // Small cluster threshold
+      |             ^~~~~~~~~~~~~~~~
+      |             GetClusterMembers
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1139:47: error: ‘m_lqe’ was not declared in this scope
+ 1139 |             std::vector<uint32_t> neighbors = m_lqe->GetNeighbors();
+      |                                               ^~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1163:17: error: ‘m_nodeState’ was not declared in this scope
+ 1163 |                 m_nodeState = UNDECIDED;
+      |                 ^~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1163:31: error: ‘UNDECIDED’ was not declared in this scope
+ 1163 |                 m_nodeState = UNDECIDED;
+      |                               ^~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1167:17: error: ‘m_currentCluster’ was not declared in this scope
+ 1167 |                 m_currentCluster = ClusterInfo();
+      |                 ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1167:36: error: ‘ClusterInfo’ was not declared in this scope; did you mean ‘clusterId’?
+ 1167 |                 m_currentCluster = ClusterInfo();
+      |                                    ^~~~~~~~~~~
+      |                                    clusterId
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1183:14: error: ‘m_currentCluster’ was not declared in this scope
+ 1183 |     else if (m_currentCluster.headId == clusterId)
+      |              ^~~~~~~~~~~~~~~~
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc: At global scope:
+/home/donsoft/ns-allinone-3.43/ns-3.43/src/arpmec/model/arpmec-clustering.cc:1192:1: error: expected declaration before ‘}’ token
+ 1192 | } // namespace ns3
+      | ^
+ninja: build stopped: subcommand failed.
