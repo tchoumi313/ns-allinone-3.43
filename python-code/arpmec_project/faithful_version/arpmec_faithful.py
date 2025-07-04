@@ -6,8 +6,15 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
+
+# ML libraries (optional - fallback to simple heuristics if not available)
+try:
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.preprocessing import StandardScaler
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+    print("Warning: scikit-learn not available. Using simple heuristics for resource prediction.")
 
 warnings.filterwarnings('ignore')
 
@@ -64,33 +71,46 @@ class MECServer:
             return True
         return False
     
-    def process_tasks(self) -> List[Dict]:
-        """Process tasks in queue"""
-        completed = []
-        
-        for task in self.task_queue[:]:  # Copy list to avoid modification during iteration
-            # Simulate processing time
-            processing_time = task.cpu_requirement * 0.1  # 0.1 seconds per CPU unit
-            
-            result = {
-                'task_id': task.task_id,
-                'source_cluster_id': task.source_cluster_id,
-                'result': 'completed',
-                'processing_time': processing_time,
-                'server_id': self.id
-            }
-            
-            completed.append(result)
-            self.completed_tasks.append(task)
-            self.task_queue.remove(task)
-            self.total_tasks_processed += 1
-            
-            # Free resources
-            self.cpu_usage -= task.cpu_requirement
-            self.memory_usage -= task.memory_requirement
-            
-        return completed
+    def get_load_percentage(self) -> float:
+        """Get current load as percentage"""
+        cpu_load = (self.cpu_usage / self.cpu_capacity) * 100
+        memory_load = (self.memory_usage / self.memory_capacity) * 100
+        return max(cpu_load, memory_load)
     
+    @property
+    def current_load(self) -> float:
+        """Property for current load percentage"""
+        return self.get_load_percentage()
+    
+    def process_tasks(self):
+        """Process tasks in the queue"""
+        completed_results = []
+        
+        tasks_to_process = min(3, len(self.task_queue))  # Process up to 3 tasks per cycle
+        for _ in range(tasks_to_process):
+            if self.task_queue:
+                task = self.task_queue.pop(0)
+                self.processing_tasks.append(task)
+                self.cpu_usage += task.cpu_requirement
+                self.memory_usage += task.memory_requirement
+                print(f"    MEC-{self.id}: Processing task {task.task_id} (load: {self.current_load:.1f}%)")
+        
+        # Complete some processing tasks
+        if self.processing_tasks and random.random() < 0.6:  # 60% chance to complete a task
+            completed_task = self.processing_tasks.pop(0)
+            self.completed_tasks.append(completed_task)
+            self.cpu_usage = max(0, self.cpu_usage - completed_task.cpu_requirement)
+            self.memory_usage = max(0, self.memory_usage - completed_task.memory_requirement)
+            print(f"    MEC-{self.id}: Completed task {completed_task.task_id}")
+            
+            # Add to results
+            completed_results.append({
+                'task_id': completed_task.task_id,
+                'source_cluster_id': completed_task.source_cluster_id
+            })
+        
+        return completed_results
+
     def distance_to(self, x: float, y: float) -> float:
         """Calculate distance to a point"""
         return math.sqrt((self.x - x)**2 + (self.y - y)**2)
@@ -245,7 +265,7 @@ class ARPMECProtocol:
         self.HUBmax = 10     # Max objects per cluster
         
         # FIXED: More realistic communication range for demonstrable mobility effects
-        self.communication_range = 120.0  # 120m for intra-cluster communication (reduced for faster re-clustering)
+        self.communication_range = 100.0  # 100m for intra-cluster communication (reduced further for more visible clustering)
         self.inter_cluster_range = 250.0  # 250m for CH-to-CH communication
         self.mec_communication_range = 400.0  # 400m for CH-to-MEC communication
         self.current_time_slot = 0
@@ -256,8 +276,13 @@ class ARPMECProtocol:
         self.inter_cluster_routing_table = {}
         
         # ML model for link quality prediction (as per paper)
-        self.lqe_model = RandomForestClassifier(n_estimators=100, random_state=42)
-        self.lqe_scaler = StandardScaler()
+        # Initialize ML models if available
+        if ML_AVAILABLE:
+            self.lqe_model = RandomForestClassifier(n_estimators=100, random_state=42)
+            self.lqe_scaler = StandardScaler()
+        else:
+            self.lqe_model = None
+            self.lqe_scaler = None
         self._train_lqe_model()
         
         # Initialize MEC servers
@@ -514,99 +539,183 @@ class ARPMECProtocol:
                 
                 # Try to offload to MEC server
                 self._ch_to_mec_communication(ch, task)
-    
     def _check_and_recluster(self):
-        """Check if nodes need to switch clusters due to mobility"""
+        """PAPER-BASED COMPREHENSIVE re-clustering: Handle ALL nodes and ensure proper clustering"""
         nodes_changed = False
         
-        for node_id, node in self.nodes.items():
-            if not node.is_alive() or node.state != NodeState.CLUSTER_MEMBER:
-                continue
+        print("\n=== COMPREHENSIVE RE-CLUSTERING (Paper Algorithm) ===")
+        
+        # Step 1: Check cluster head validity and step down low-energy CHs
+        cluster_heads = self._get_cluster_heads()
+        stepped_down_chs = []
+        
+        for ch in cluster_heads[:]:  # Copy list to avoid modification during iteration
+            if ch.energy < ch.energy_threshold_f:
+                print(f"CH-{ch.id} stepping down due to low energy ({ch.energy:.1f}J)")
                 
-            # Check if current cluster head is still reachable
-            current_ch = None
-            if node.cluster_head_id is not None:
-                current_ch = self.nodes.get(node.cluster_head_id)
+                # All members become idle
+                for member_id in ch.cluster_members[:]:
+                    if member_id in self.nodes:
+                        member = self.nodes[member_id]
+                        member.state = NodeState.IDLE
+                        member.cluster_head_id = None
+                        member.cluster_id = None
                 
-            if current_ch and current_ch.is_alive():
-                distance_to_current_ch = node.distance_to(current_ch)
+                # CH becomes idle
+                ch.state = NodeState.IDLE
+                ch.cluster_head_id = None
+                ch.cluster_id = None
+                ch.cluster_members = []
+                stepped_down_chs.append(ch)
+                nodes_changed = True
+        
+        # Step 2: Process ALL alive nodes for clustering
+        remaining_chs = self._get_cluster_heads()  # Get updated list
+        all_nodes = [n for n in self.nodes.values() if n.is_alive()]
+        
+        # Separate idle nodes and existing members
+        idle_nodes = [n for n in all_nodes if n.state == NodeState.IDLE]
+        member_nodes = [n for n in all_nodes if n.state == NodeState.CLUSTER_MEMBER]
+        
+        print(f"Processing {len(idle_nodes)} idle nodes and {len(member_nodes)} cluster members")
+        
+        # Step 3: Check existing cluster members for validity
+        for node in member_nodes:
+            current_ch = self.nodes.get(node.cluster_head_id) if node.cluster_head_id is not None else None
+            need_reassignment = False
+            
+            if not current_ch or not current_ch.is_alive() or current_ch.state != NodeState.CLUSTER_HEAD:
+                need_reassignment = True
+                print(f"Node-{node.id}: CH is invalid/dead")
+            elif node.distance_to(current_ch) > self.communication_range:
+                need_reassignment = True
+                print(f"Node-{node.id}: Too far from CH-{current_ch.id} ({node.distance_to(current_ch):.1f}m)")
+            
+            if need_reassignment:
+                # Remove from current cluster
+                if current_ch and node.id in current_ch.cluster_members:
+                    current_ch.cluster_members.remove(node.id)
                 
-                # If too far from current CH, look for a better one
-                if distance_to_current_ch > self.communication_range:
-                    print(f"Node-{node.id} too far from CH-{current_ch.id} ({distance_to_current_ch:.1f}m > {self.communication_range}m)")
-                    
-                    # Find nearest cluster head
-                    best_ch = None
-                    min_distance = float('inf')
-                    
-                    for ch in self._get_cluster_heads():
-                        if ch.id != node.id:  # Can't join itself
-                            distance = node.distance_to(ch)
-                            if distance <= self.communication_range and distance < min_distance:
-                                min_distance = distance
-                                best_ch = ch
-                    
-                    # Switch clusters if found a better CH
-                    if best_ch and best_ch.id != node.cluster_head_id:
-                        # Leave old cluster
-                        if current_ch.id in self.nodes:
-                            if node.id in current_ch.cluster_members:
-                                current_ch.cluster_members.remove(node.id)
-                        
-                        # Join new cluster
-                        node.cluster_head_id = best_ch.id
-                        node.cluster_id = best_ch.cluster_id
-                        best_ch.cluster_members.append(node.id)
-                        
-                        print(f"Node-{node.id} switched from CH-{current_ch.id} to CH-{best_ch.id} (distance: {min_distance:.1f}m)")
-                        nodes_changed = True
-                        
-                        # Energy cost for re-joining
-                        energy_cost = node.calculate_energy_consumption(1, min_distance)
-                        node.update_energy(energy_cost)
-                    else:
-                        # No suitable CH found - become idle
-                        print(f"Node-{node.id} becomes IDLE (no CH in range)")
-                        node.state = NodeState.IDLE
-                        node.cluster_head_id = None
-                        node.cluster_id = None
-                        if current_ch.id in self.nodes:
-                            if node.id in current_ch.cluster_members:
-                                current_ch.cluster_members.remove(node.id)
-                        nodes_changed = True
-            else:
-                # Current CH is dead or unreachable - find new one
-                print(f"Node-{node.id}'s CH is dead/unreachable, finding new CH...")
-                
-                best_ch = None
-                min_distance = float('inf')
-                
-                for ch in self._get_cluster_heads():
-                    if ch.id != node.id:
-                        distance = node.distance_to(ch)
-                        if distance <= self.communication_range and distance < min_distance:
+                # Make idle for reassignment
+                node.state = NodeState.IDLE
+                node.cluster_head_id = None
+                node.cluster_id = None
+                idle_nodes.append(node)
+                nodes_changed = True
+        
+        # Step 4: Assign all idle nodes to clusters or promote them to CHs
+        for node in idle_nodes:
+            # Find nearest available cluster head
+            best_ch = None
+            min_distance = float('inf')
+            
+            for ch in remaining_chs:
+                if ch.id != node.id and ch.is_alive():
+                    distance = node.distance_to(ch)
+                    if distance <= self.communication_range and distance < min_distance:
+                        # Check cluster capacity
+                        if len(ch.cluster_members) < self.HUBmax:
                             min_distance = distance
                             best_ch = ch
-                
-                if best_ch:
-                    node.cluster_head_id = best_ch.id
-                    node.cluster_id = best_ch.cluster_id
+            
+            if best_ch:
+                # Join existing cluster
+                node.cluster_head_id = best_ch.id
+                node.cluster_id = best_ch.cluster_id
+                node.state = NodeState.CLUSTER_MEMBER
+                if node.id not in best_ch.cluster_members:
                     best_ch.cluster_members.append(node.id)
-                    print(f"Node-{node.id} joined CH-{best_ch.id} (distance: {min_distance:.1f}m)")
+                
+                energy_cost = node.calculate_energy_consumption(1, min_distance)
+                node.update_energy(energy_cost)
+                
+                print(f"[JOIN] Node-{node.id} → CH-{best_ch.id} (distance: {min_distance:.1f}m)")
+                nodes_changed = True
+                
+            else:
+                # No suitable cluster found - check if can become cluster head
+                can_be_ch = True
+                
+                # Don't become CH if too close to existing CHs (avoid cluster overlap)
+                for ch in remaining_chs:
+                    if node.distance_to(ch) < self.communication_range * 0.7:  # 70m separation
+                        can_be_ch = False
+                        break
+                
+                if can_be_ch and node.energy > node.energy_threshold_f:
+                    # Promote to cluster head
+                    node.state = NodeState.CLUSTER_HEAD
+                    node.cluster_head_id = None
+                    node.cluster_id = node.id
+                    node.cluster_members = []
+                    remaining_chs.append(node)  # Add to CH list
                     
-                    # Energy cost for joining
-                    energy_cost = node.calculate_energy_consumption(1, min_distance)
-                    node.update_energy(energy_cost)
+                    print(f"[PROMOTE] Node-{node.id} → NEW CLUSTER HEAD")
                     nodes_changed = True
                 else:
-                    # No CH in range - become idle
-                    node.state = NodeState.IDLE
-                    node.cluster_head_id = None
-                    node.cluster_id = None
-                    print(f"Node-{node.id} becomes IDLE (no CH in range)")
+                    # Stay idle (will be retried next round)
+                    print(f"[IDLE] Node-{node.id} remains idle (no suitable cluster/CH position)")
+        
+        # Step 5: Handle cluster merging if CHs are too close
+        final_chs = self._get_cluster_heads()
+        for i, ch1 in enumerate(final_chs):
+            for j, ch2 in enumerate(final_chs[i+1:], i+1):
+                distance = ch1.distance_to(ch2)
+                
+                # Merge clusters if CHs are too close (paper suggests avoiding overlapping coverage)
+                if distance < self.communication_range * 0.6:  # 60m merge threshold
+                    ch1_size = len(ch1.cluster_members)
+                    ch2_size = len(ch2.cluster_members)
+                    
+                    # Merge smaller cluster into larger one
+                    if ch1_size >= ch2_size:
+                        self._merge_clusters(ch2, ch1)
+                        print(f"[MERGE] CH-{ch2.id} → CH-{ch1.id} (distance: {distance:.1f}m)")
+                    else:
+                        self._merge_clusters(ch1, ch2)
+                        print(f"[MERGE] CH-{ch1.id} → CH-{ch2.id} (distance: {distance:.1f}m)")
+                    
                     nodes_changed = True
+                    break
+        
+        # Step 6: Show final clustering statistics
+        if nodes_changed:
+            final_chs = self._get_cluster_heads()
+            idle_count = sum(1 for n in self.nodes.values() if n.state == NodeState.IDLE and n.is_alive())
+            
+            print(f"\n=== POST RE-CLUSTERING STATISTICS ===")
+            print(f"  Total Cluster Heads: {len(final_chs)}")
+            for ch in final_chs:
+                print(f"    CH-{ch.id}: {len(ch.cluster_members)} members")
+            print(f"  Idle nodes: {idle_count}")
+            
+            if idle_count > 0:
+                print(f"  ⚠️  {idle_count} nodes remain idle (will retry next round)")
         
         return nodes_changed
+    
+    def _merge_clusters(self, source_ch, target_ch):
+        """Merge source cluster into target cluster (paper-based cluster consolidation)"""
+        print(f"    Merging cluster {source_ch.id} ({len(source_ch.cluster_members)} members) into cluster {target_ch.id}")
+        
+        # Transfer all members
+        for member_id in source_ch.cluster_members[:]:
+            if member_id in self.nodes:
+                member = self.nodes[member_id]
+                member.cluster_head_id = target_ch.id
+                member.cluster_id = target_ch.cluster_id
+                if member_id not in target_ch.cluster_members:
+                    target_ch.cluster_members.append(member_id)
+        
+        # Convert source CH to member of target cluster
+        source_ch.state = NodeState.CLUSTER_MEMBER
+        source_ch.cluster_head_id = target_ch.id
+        source_ch.cluster_id = target_ch.cluster_id
+        source_ch.cluster_members = []
+        
+        # Add source CH as member of target
+        if source_ch.id not in target_ch.cluster_members:
+            target_ch.cluster_members.append(source_ch.id)
     
     def _process_mec_servers(self):
         """Process tasks at all MEC servers"""
@@ -715,21 +824,34 @@ class ARPMECProtocol:
                 labels.append(0)  # Poor
         
         # Train the model
-        self.lqe_scaler.fit(features)
-        scaled_features = self.lqe_scaler.transform(features)
-        self.lqe_model.fit(scaled_features, labels)
+        if ML_AVAILABLE and self.lqe_model is not None:
+            self.lqe_scaler.fit(features)
+            scaled_features = self.lqe_scaler.transform(features)
+            self.lqe_model.fit(scaled_features, labels)
+        else:
+            # Store simple lookup for fallback
+            self.simple_lqe_data = list(zip(features, labels))
     
     def predict_link_quality(self, rssi: float, pdr: float) -> float:
-        """Link quality prediction using Random Forest (exact as paper)"""
-        features = np.array([[rssi, pdr]])
-        scaled_features = self.lqe_scaler.transform(features)
-        
-        # Get prediction probabilities for quality classes
-        probabilities = self.lqe_model.predict_proba(scaled_features)[0]
-        
-        # Convert to single score (weighted by quality levels)
-        quality_score = probabilities[0] * 0.2 + probabilities[1] * 0.6 + probabilities[2] * 1.0
-        return quality_score
+        """Link quality prediction using Random Forest or simple heuristics"""
+        if ML_AVAILABLE and self.lqe_model is not None:
+            features = np.array([[rssi, pdr]])
+            scaled_features = self.lqe_scaler.transform(features)
+            
+            # Get prediction probabilities for quality classes
+            probabilities = self.lqe_model.predict_proba(scaled_features)[0]
+            
+            # Convert to single score (weighted by quality levels)
+            quality_score = probabilities[0] * 0.2 + probabilities[1] * 0.6 + probabilities[2] * 1.0
+            return quality_score
+        else:
+            # Simple heuristic fallback
+            if pdr > 0.8 and rssi > -60:
+                return 1.0  # Excellent
+            elif pdr > 0.6 and rssi > -80:
+                return 0.6  # Good  
+            else:
+                return 0.2  # Poor
     
     def get_neighbors(self, node_id: int) -> List[int]:
         """Get neighbors within communication range"""
@@ -833,12 +955,25 @@ class ARPMECProtocol:
             if best_neighbor_id is not None:
                 join_decisions[node_id] = best_neighbor_id
         
-        # Step 3: FIXED Cluster Head Election
-        print("Phase 3: Cluster Head Election...")
+        # Step 3: IMPROVED Cluster Head Election with Distance Constraints
+        print("Phase 3: Distance-Aware Cluster Head Election...")
         
-        # Count JOIN votes for each node
+        # IMPROVEMENT: Filter join decisions by distance to prevent distant cluster assignments
+        filtered_join_decisions = {}
+        for sender_id, target_id in join_decisions.items():
+            sender = self.nodes[sender_id]
+            target = self.nodes[target_id]
+            distance = sender.distance_to(target)
+            
+            # Only allow cluster membership if within communication range
+            if distance <= self.communication_range:
+                filtered_join_decisions[sender_id] = target_id
+            else:
+                print(f"Node {sender_id} rejected distant CH {target_id} (distance: {distance:.1f}m > {self.communication_range}m)")
+        
+        # Count JOIN votes for each node (with distance filtering)
         join_votes = {}
-        for sender, target in join_decisions.items():
+        for sender, target in filtered_join_decisions.items():
             if target not in join_votes:
                 join_votes[target] = []
             join_votes[target].append(sender)
@@ -855,7 +990,7 @@ class ARPMECProtocol:
                 head_node.cluster_members = []
                 clusters[head_id] = []
                 
-                # Add voters as cluster members
+                # Add voters as cluster members (already distance-filtered)
                 for voter_id in voters:
                     if voter_id != head_id and voter_id in self.nodes:
                         member_node = self.nodes[voter_id]
@@ -887,7 +1022,7 @@ class ARPMECProtocol:
         """FIXED Algorithm 3: Adaptive routing with inter-cluster communication and MOBILITY"""
         print(f"Starting FIXED Algorithm 3: Adaptive Routing with mobility and re-clustering for {T} rounds...")
         
-        reclustering_interval = 10  # Re-cluster every 10 rounds due to mobility
+        reclustering_interval = 5  # Re-cluster every 5 rounds (was 10) for more frequent re-clustering
         
         for round_num in range(T):
             self.current_time_slot = round_num

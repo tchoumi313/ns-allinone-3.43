@@ -1,0 +1,133 @@
+=== DEBUGGING CLUSTER MEMBER VISIBILITY ===
+Deploying 2 MEC servers...
+  MEC Server 0 deployed at (165.9, 183.4)
+  MEC Server 1 deployed at (244.4, 183.4)
+
+Initial Network:
+  Node-0: (256, 10) energy=95.5
+  Node-1: (271, 357) energy=91.7
+  Node-2: (87, 202) energy=90.5
+  Node-3: (218, 88) energy=101.8
+  Node-4: (322, 279) energy=96.8
+  Node-5: (135, 37) energy=91.9
+  Node-6: (323, 292) energy=100.7
+  Node-7: (221, 332) energy=102.4
+  Node-8: (282, 18) energy=94.6
+  Node-9: (93, 40) energy=95.6
+
+Running clustering...
+Starting FIXED Algorithm 2: Clustering with LQE...
+Phase 1: Broadcasting HELLO messages for neighbor discovery...
+Phase 2: Link Quality Prediction and JOIN decisions...
+Phase 3: Distance-Aware Cluster Head Election...
+Clustering complete. Created 6 clusters.
+Building inter-cluster routing table...
+Inter-cluster communication setup complete.
+
+After clustering:
+  Clusters formed: 6
+
+=== DETAILED ANALYSIS ===
+Total nodes: 10
+Cluster heads: 4
+
+Node-0 at (256, 10):
+  State: NodeState.CLUSTER_HEAD
+  Cluster ID: 0
+  Cluster Head ID: 3
+  Is alive: True
+  -> CLUSTER HEAD with 2 members: [3, 8]
+
+Node-1 at (271, 357):
+  State: NodeState.CLUSTER_HEAD
+  Cluster ID: 1
+  Cluster Head ID: 4
+  Is alive: True
+  -> CLUSTER HEAD with 3 members: [4, 6, 7]
+
+Node-2 at (87, 202):
+  State: NodeState.CLUSTER_HEAD
+  Cluster ID: 2
+  Cluster Head ID: None
+  Is alive: True
+  -> CLUSTER HEAD with 0 members: []
+
+Node-3 at (218, 88):
+  State: NodeState.CLUSTER_MEMBER
+  Cluster ID: 0
+  Cluster Head ID: 0
+  Is alive: True
+  -> MEMBER of CH-0 (distance: 86.8m)
+
+Node-4 at (322, 279):
+  State: NodeState.CLUSTER_MEMBER
+  Cluster ID: 1
+  Cluster Head ID: 1
+  Is alive: True
+  -> MEMBER of CH-1 (distance: 93.2m)
+
+Node-5 at (135, 37):
+  State: NodeState.CLUSTER_HEAD
+  Cluster ID: 5
+  Cluster Head ID: 3
+  Is alive: True
+  -> CLUSTER HEAD with 1 members: [9]
+
+Node-6 at (323, 292):
+  State: NodeState.CLUSTER_MEMBER
+  Cluster ID: 1
+  Cluster Head ID: 1
+  Is alive: True
+  -> MEMBER of CH-1 (distance: 83.3m)
+
+Node-7 at (221, 332):
+  State: NodeState.CLUSTER_MEMBER
+  Cluster ID: 1
+  Cluster Head ID: 1
+  Is alive: True
+  -> MEMBER of CH-1 (distance: 55.8m)
+
+Node-8 at (282, 18):
+  State: NodeState.CLUSTER_MEMBER
+  Cluster ID: 0
+  Cluster Head ID: 0
+  Is alive: True
+  -> MEMBER of CH-0 (distance: 27.4m)
+
+Node-9 at (93, 40):
+  State: NodeState.CLUSTER_MEMBER
+  Cluster ID: 5
+  Cluster Head ID: 5
+  Is alive: True
+  -> MEMBER of CH-5 (distance: 41.7m)
+
+=== SUMMARY ===
+Cluster heads: 4 - IDs: [0, 1, 2, 5]
+Cluster members: 6 - IDs: [3, 4, 6, 7, 8, 9]
+Idle nodes: 0 - IDs: []
+
+CH-0 analysis:
+  CH.cluster_members list: [3, 8]
+  Actual members found: [3, 8]
+  Match: True
+    Member-3: 86.8m (in range: True)
+    Member-8: 27.4m (in range: True)
+
+CH-1 analysis:
+  CH.cluster_members list: [4, 6, 7]
+  Actual members found: [4, 6, 7]
+  Match: True
+    Member-4: 93.2m (in range: True)
+    Member-6: 83.3m (in range: True)
+    Member-7: 55.8m (in range: True)
+
+CH-2 analysis:
+  CH.cluster_members list: []
+  Actual members found: []
+  Match: True
+
+CH-5 analysis:
+  CH.cluster_members list: [9]
+  Actual members found: [9]
+  Match: True
+    Member-9: 41.7m (in range: True)
