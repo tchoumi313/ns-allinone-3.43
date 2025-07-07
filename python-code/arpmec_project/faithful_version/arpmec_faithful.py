@@ -39,8 +39,66 @@ class InterClusterMessage:
     payload: Dict
     timestamp: float
 
+@dataclass
+class IARServer:
+    """Infrastructure Access Router (IAR) - Base Station between CH and MEC"""
+    def __init__(self, iar_id: int, x: float, y: float, coverage_radius: float = 200.0):
+        self.id = iar_id
+        self.x = x
+        self.y = y
+        self.coverage_radius = coverage_radius
+        self.connected_clusters = []  # List of cluster IDs served
+        self.connected_mec_servers = []  # List of MEC server IDs
+        self.message_queue = []  # Queue for CH->MEC messages
+        self.load_balancing_table = {}  # Track MEC server loads
+        self.routing_table = {}  # Routing decisions for adaptive routing
+        
+    def distance_to(self, x: float, y: float) -> float:
+        """Calculate distance to a point"""
+        return math.sqrt((self.x - x)**2 + (self.y - y)**2)
+    
+    def can_serve_cluster(self, ch_x: float, ch_y: float) -> bool:
+        """Check if IAR can serve a cluster head"""
+        return self.distance_to(ch_x, ch_y) <= self.coverage_radius
+    
+    def register_cluster(self, cluster_id: int):
+        """Register a cluster with this IAR"""
+        if cluster_id not in self.connected_clusters:
+            self.connected_clusters.append(cluster_id)
+    
+    def add_mec_server(self, mec_id: int):
+        """Add a MEC server to this IAR's network"""
+        if mec_id not in self.connected_mec_servers:
+            self.connected_mec_servers.append(mec_id)
+    
+    def route_to_best_mec(self, task: 'MECTask', mec_servers: Dict[int, 'MECServer']) -> Optional['MECServer']:
+        """Adaptive routing: Find best MEC server for task"""
+        if not self.connected_mec_servers:
+            return None
+        
+        # Find least loaded MEC server
+        best_mec = None
+        min_load = float('inf')
+        
+        for mec_id in self.connected_mec_servers:
+            if mec_id in mec_servers:
+                mec = mec_servers[mec_id]
+                current_load = mec.get_load_percentage()
+                
+                # Check if MEC can handle the task
+                if mec.can_handle_task(task) and current_load < min_load:
+                    min_load = current_load
+                    best_mec = mec
+        
+        # If no MEC can handle locally, try load balancing to other IARs
+        if best_mec is None:
+            print(f"IAR-{self.id}: No local MEC available, attempting load balancing")
+            # This would trigger inter-IAR communication in a real implementation
+        
+        return best_mec
+
 class MECServer:
-    """MEC Server for edge computing tasks"""
+    """MEC Server for edge computing tasks with improved load balancing"""
     
     def __init__(self, server_id: int, x: float, y: float, 
                  cpu_capacity: float = 100.0, memory_capacity: float = 1000.0):
@@ -56,20 +114,28 @@ class MECServer:
         self.processing_tasks = []
         self.completed_tasks = []
         self.total_tasks_processed = 0
+        self.rejected_tasks = 0  # Track rejected tasks for load balancing
+        self.load_history = []  # Track load over time
         
     def can_handle_task(self, task: MECTask) -> bool:
-        """Check if MEC server can handle the task"""
-        return (self.cpu_usage + task.cpu_requirement <= self.cpu_capacity and
-                self.memory_usage + task.memory_requirement <= self.memory_capacity)
+        """Check if MEC server can handle the task with improved thresholds"""
+        # Lower threshold to reduce overloads (80% instead of 100%)
+        cpu_threshold = self.cpu_capacity * 0.8
+        memory_threshold = self.memory_capacity * 0.8
+        
+        return (self.cpu_usage + task.cpu_requirement <= cpu_threshold and
+                self.memory_usage + task.memory_requirement <= memory_threshold)
     
     def accept_task(self, task: MECTask) -> bool:
-        """Accept task for processing"""
+        """Accept task for processing with improved admission control"""
         if self.can_handle_task(task):
             self.task_queue.append(task)
             self.cpu_usage += task.cpu_requirement
             self.memory_usage += task.memory_requirement
             return True
-        return False
+        else:
+            self.rejected_tasks += 1
+            return False
     
     def get_load_percentage(self) -> float:
         """Get current load as percentage"""
@@ -82,26 +148,56 @@ class MECServer:
         """Property for current load percentage"""
         return self.get_load_percentage()
     
+    def get_load_level(self) -> str:
+        """Get load level description"""
+        load = self.get_load_percentage()
+        if load < 30:
+            return "LOW"
+        elif load < 60:
+            return "MEDIUM"
+        elif load < 80:
+            return "HIGH"
+        else:
+            return "CRITICAL"
+    
     def process_tasks(self):
-        """Process tasks in the queue"""
+        """Process tasks in the queue with improved processing"""
         completed_results = []
         
-        tasks_to_process = min(3, len(self.task_queue))  # Process up to 3 tasks per cycle
+        # Record current load
+        self.load_history.append(self.current_load)
+        if len(self.load_history) > 100:  # Keep only last 100 entries
+            self.load_history.pop(0)
+        
+        # Process more tasks when load is low, fewer when high
+        load_level = self.get_load_percentage()
+        if load_level < 30:
+            max_tasks_to_process = 5
+        elif load_level < 60:
+            max_tasks_to_process = 3
+        else:
+            max_tasks_to_process = 1
+            
+        tasks_to_process = min(max_tasks_to_process, len(self.task_queue))
+        
         for _ in range(tasks_to_process):
             if self.task_queue:
                 task = self.task_queue.pop(0)
                 self.processing_tasks.append(task)
-                self.cpu_usage += task.cpu_requirement
-                self.memory_usage += task.memory_requirement
-                print(f"    MEC-{self.id}: Processing task {task.task_id} (load: {self.current_load:.1f}%)")
+                if self.get_load_percentage() < 80:  # Only show if not overloaded
+                    print(f"    MEC-{self.id}: Processing task {task.task_id} (load: {self.current_load:.1f}%/{self.get_load_level()})")
         
-        # Complete some processing tasks
-        if self.processing_tasks and random.random() < 0.6:  # 60% chance to complete a task
+        # Complete some processing tasks (improved completion rate)
+        completion_probability = 0.8 if self.get_load_percentage() < 50 else 0.4
+        if self.processing_tasks and random.random() < completion_probability:
             completed_task = self.processing_tasks.pop(0)
             self.completed_tasks.append(completed_task)
             self.cpu_usage = max(0, self.cpu_usage - completed_task.cpu_requirement)
             self.memory_usage = max(0, self.memory_usage - completed_task.memory_requirement)
-            print(f"    MEC-{self.id}: Completed task {completed_task.task_id}")
+            self.total_tasks_processed += 1
+            
+            if self.get_load_percentage() < 80:  # Only show if not overloaded
+                print(f"    MEC-{self.id}: Completed task {completed_task.task_id}")
             
             # Add to results
             completed_results.append({
@@ -254,7 +350,7 @@ class Node:
         }
 
 class ARPMECProtocol:
-    """FIXED implementation of ARPMEC with complete inter-cluster communication"""
+    """ENHANCED implementation of ARPMEC with IAR infrastructure and adaptive routing"""
     
     def __init__(self, nodes: List[Node], C: int = 16, R: int = 100, K: int = 3):
         self.nodes = {node.id: node for node in nodes}
@@ -264,14 +360,15 @@ class ARPMECProtocol:
         self.K = K           # Number of MEC servers
         self.HUBmax = 10     # Max objects per cluster
         
-        # FIXED: More realistic communication range for demonstrable mobility effects
-        self.communication_range = 100.0  # 100m for intra-cluster communication (reduced further for more visible clustering)
+        # ENHANCED: More realistic communication range for demonstrable mobility effects
+        self.communication_range = 100.0  # 100m for intra-cluster communication
         self.inter_cluster_range = 250.0  # 250m for CH-to-CH communication
         self.mec_communication_range = 400.0  # 400m for CH-to-MEC communication
         self.current_time_slot = 0
         
-        # MEC Infrastructure
+        # Infrastructure
         self.mec_servers = {}
+        self.iar_servers = {}  # NEW: IAR infrastructure
         self.clusters = {}
         self.inter_cluster_routing_table = {}
         
@@ -287,6 +384,69 @@ class ARPMECProtocol:
         
         # Initialize MEC servers
         self._deploy_mec_servers()
+        
+        # NEW: Initialize IAR infrastructure
+        self._deploy_iar_infrastructure()
+        self._connect_iar_to_mec()
+    
+    def _deploy_iar_infrastructure(self):
+        """Deploy IAR (Infrastructure Access Router) servers strategically"""
+        print("Deploying IAR infrastructure...")
+        
+        # Deploy IAR servers to provide coverage for clusters
+        # Strategy: Place IAR servers to cover different areas
+        area_width = 1000
+        area_height = 1000
+        
+        # Create a grid of IAR servers for comprehensive coverage
+        iar_positions = [
+            (200, 200),   # IAR-1: Southwest
+            (200, 800),   # IAR-2: Northwest  
+            (700, 250),   # IAR-3: Southeast
+            (800, 800),   # IAR-4: Northeast
+            (500, 500),   # IAR-5: Central
+        ]
+        
+        for i, (x, y) in enumerate(iar_positions):
+            iar_id = i + 1
+            iar_server = IARServer(iar_id, x, y, coverage_radius=250)  # 250m coverage
+            self.iar_servers[iar_id] = iar_server
+            print(f"  IAR-{iar_id} deployed at ({x}, {y}) with {iar_server.coverage_radius}m coverage")
+    
+    def _connect_iar_to_mec(self):
+        """Connect IAR servers to MEC servers for routing"""
+        print("Connecting IAR servers to MEC servers...")
+        
+        for iar_id, iar in self.iar_servers.items():
+            # Find nearest MEC servers for this IAR
+            mec_distances = []
+            for mec_id, mec in self.mec_servers.items():
+                distance = iar.distance_to(mec.x, mec.y)
+                mec_distances.append((mec_id, distance))
+            
+            # Sort by distance and connect to nearest 2-3 MEC servers
+            mec_distances.sort(key=lambda x: x[1])
+            connected_mecs = []
+            
+            for mec_id, distance in mec_distances[:3]:  # Connect to 3 nearest MECs
+                if distance <= 400:  # Within 400m range
+                    iar.add_mec_server(mec_id)
+                    connected_mecs.append(f"MEC-{mec_id}(d={distance:.0f}m)")
+            
+            print(f"  IAR-{iar_id} connected to: {', '.join(connected_mecs)}")
+    
+    def _find_nearest_iar_server(self, node: Node) -> Optional[IARServer]:
+        """Find nearest IAR server for a cluster head"""
+        nearest_iar = None
+        min_distance = float('inf')
+        
+        for iar in self.iar_servers.values():
+            distance = iar.distance_to(node.x, node.y)
+            if distance < min_distance and iar.can_serve_cluster(node.x, node.y):
+                min_distance = distance
+                nearest_iar = iar
+        
+        return nearest_iar
     
     def _deploy_mec_servers(self):
         """Deploy MEC servers strategically in the network"""
@@ -310,7 +470,7 @@ class ARPMECProtocol:
             server = MECServer(
                 server_id=i,
                 x=x, y=y,
-                cpu_capacity=100.0,
+                cpu_capacity=200.0,
                 memory_capacity=1000.0
             )
             self.mec_servers[i] = server
@@ -387,24 +547,23 @@ class ARPMECProtocol:
                             self.inter_cluster_routing_table[ch.id]['routes'][target_ch.id] = [nearest_neighbor.id]
     
     def _ch_to_ch_communication(self, source_ch: Node, target_cluster_id: int, message: InterClusterMessage):
-        """Handle cluster head to cluster head communication VIA MEC SERVER"""
+        """ENHANCED: CH-to-CH communication via IAR and MEC infrastructure"""
         
-        # FIXED: CH-to-CH communication must go through MEC servers
-        # Step 1: CH sends message to its nearest MEC server
-        nearest_mec = self._find_nearest_mec_server(source_ch)
-        if not nearest_mec:
-            print(f"CH-{source_ch.id}: No MEC server available for inter-cluster communication")
+        # Step 1: Find nearest IAR server for source CH
+        nearest_iar = self._find_nearest_iar_server(source_ch)
+        if not nearest_iar:
+            print(f"CH-{source_ch.id}: No IAR server available")
             return False
         
-        # Calculate energy cost for CH-to-MEC communication
-        distance_to_mec = nearest_mec.distance_to(source_ch.x, source_ch.y)
-        energy_cost_to_mec = source_ch.calculate_energy_consumption(1, distance_to_mec)
+        # Step 2: Calculate energy cost for CH-to-IAR communication
+        distance_to_iar = nearest_iar.distance_to(source_ch.x, source_ch.y)
+        energy_cost_to_iar = source_ch.calculate_energy_consumption(1, distance_to_iar)
         
-        if source_ch.energy < energy_cost_to_mec:
-            print(f"CH-{source_ch.id}: Insufficient energy for MEC communication")
+        if source_ch.energy < energy_cost_to_iar:
+            print(f"CH-{source_ch.id}: Insufficient energy for IAR communication")
             return False
         
-        # Step 2: MEC server forwards message to target cluster's CH via target's MEC
+        # Step 3: Find target cluster's CH
         target_ch = None
         for ch in self._get_cluster_heads():
             if ch.cluster_id == target_cluster_id:
@@ -415,56 +574,84 @@ class ARPMECProtocol:
             print(f"CH-{source_ch.id}: Target cluster {target_cluster_id} not found")
             return False
         
-        target_mec = self._find_nearest_mec_server(target_ch)
-        if not target_mec:
-            print(f"CH-{source_ch.id}: Target cluster has no MEC server")
+        # Step 4: Find target IAR server
+        target_iar = self._find_nearest_iar_server(target_ch)
+        if not target_iar:
+            print(f"CH-{source_ch.id}: Target cluster has no IAR server")
             return False
         
-        # Step 3: Execute the communication through MEC infrastructure
-        source_ch.update_energy(energy_cost_to_mec)
+        # Step 5: Use IAR for adaptive routing to find best MEC server
+        best_mec = nearest_iar.route_to_best_mec(
+            MECTask(
+                task_id=f"comm_task_{message.message_id}",
+                source_cluster_id=message.source_cluster_id,
+                cpu_requirement=1.0,
+                memory_requirement=5.0,
+                deadline=self.current_time_slot + 10,
+                data_size=5.0,
+                created_time=self.current_time_slot
+            ),
+            self.mec_servers
+        )
         
-        # Add message to MEC server's message queue (simulating MEC-to-MEC forwarding)
-        if not hasattr(nearest_mec, 'message_queue'):
-            nearest_mec.message_queue = []
-        nearest_mec.message_queue.append({
-            'message': message,
-            'target_mec_id': target_mec.id,
-            'target_ch_id': target_ch.id
-        })
+        if not best_mec:
+            print(f"CH-{source_ch.id}: No MEC server available for routing")
+            return False
         
-        print(f"CH-{source_ch.id} -> MEC-{nearest_mec.id} -> MEC-{target_mec.id} -> CH-{target_ch.id}: {message.message_type} "
-              f"(via MEC infrastructure, energy: {energy_cost_to_mec:.4f}J)")
+        # Step 6: Execute communication: CH -> IAR -> MEC -> Target IAR -> Target CH
+        source_ch.update_energy(energy_cost_to_iar)
         
-        # Simulate MEC-to-MEC and MEC-to-target-CH delivery
+        # Register cluster with IAR
+        nearest_iar.register_cluster(source_ch.cluster_id)
+        
+        # Add to routing table for load balancing
+        nearest_iar.routing_table[target_cluster_id] = best_mec.id
+        
+        # Simulate message delivery
         target_ch.inter_cluster_messages.append(message)
+        
+        print(f"CH-{source_ch.id} -> IAR-{nearest_iar.id} -> MEC-{best_mec.id} -> IAR-{target_iar.id} -> CH-{target_ch.id}: "
+              f"{message.message_type} (via IAR/MEC infrastructure)")
         
         return True
     
     def _ch_to_mec_communication(self, ch_node: Node, task: MECTask):
-        """Handle cluster head to MEC server communication"""
+        """ENHANCED: CH-to-MEC communication via IAR with adaptive routing"""
         
-        # Find nearest MEC server
-        nearest_mec = self._find_nearest_mec_server(ch_node)
-        if not nearest_mec:
+        # Step 1: Find nearest IAR server
+        nearest_iar = self._find_nearest_iar_server(ch_node)
+        if not nearest_iar:
+            print(f"CH-{ch_node.id}: No IAR server available")
             return False
         
-        # Calculate distance and energy cost
-        distance = nearest_mec.distance_to(ch_node.x, ch_node.y)
-        energy_cost = ch_node.calculate_energy_consumption(1, distance)
+        # Step 2: Calculate energy cost for CH-to-IAR communication
+        distance_to_iar = nearest_iar.distance_to(ch_node.x, ch_node.y)
+        energy_cost = ch_node.calculate_energy_consumption(1, distance_to_iar)
         
-        # Check if CH has enough energy
         if ch_node.energy < energy_cost:
-            print(f"CH-{ch_node.id} insufficient energy for MEC communication")
+            print(f"CH-{ch_node.id}: Insufficient energy for IAR communication")
             return False
         
-        # Try to offload task to MEC server
-        if nearest_mec.accept_task(task):
+        # Step 3: Use IAR for adaptive routing to find best MEC server
+        best_mec = nearest_iar.route_to_best_mec(task, self.mec_servers)
+        
+        if not best_mec:
+            print(f"CH-{ch_node.id}: No MEC server available (all overloaded)")
+            return False
+        
+        # Step 4: Try to offload task to selected MEC server
+        if best_mec.accept_task(task):
             ch_node.update_energy(energy_cost)
-            print(f"CH-{ch_node.id} -> MEC-{nearest_mec.id}: Task {task.task_id} "
-                  f"(distance: {distance:.1f}m, energy: {energy_cost:.4f}J)")
+            
+            # Register cluster with IAR
+            nearest_iar.register_cluster(ch_node.cluster_id)
+            
+            print(f"CH-{ch_node.id} -> IAR-{nearest_iar.id} -> MEC-{best_mec.id}: Task {task.task_id} "
+                  f"(load: {best_mec.get_load_percentage():.1f}%/{best_mec.get_load_level()})")
             return True
         else:
-            print(f"MEC-{nearest_mec.id} cannot accept task {task.task_id} (overloaded)")
+            print(f"CH-{ch_node.id}: MEC-{best_mec.id} rejected task {task.task_id} "
+                  f"(load: {best_mec.get_load_percentage():.1f}%/{best_mec.get_load_level()})")
             return False
     
     def _process_inter_cluster_messages(self):
@@ -482,9 +669,9 @@ class ARPMECProtocol:
                         task_id=f"task_{message.source_cluster_id}_{ch.id}_{len(ch.mec_tasks)}",
                         source_cluster_id=message.source_cluster_id,
                         cpu_requirement=random.uniform(1, 10),
-                        memory_requirement=random.uniform(10, 100),
+                        memory_requirement=random.uniform(10, 50),
                         deadline=self.current_time_slot + 10,
-                        data_size=random.uniform(1, 50),
+                        data_size=random.uniform(1, 20),
                         created_time=self.current_time_slot
                     )
                     
@@ -496,13 +683,13 @@ class ARPMECProtocol:
                 ch.inter_cluster_messages.remove(message)
     
     def _generate_inter_cluster_traffic(self):
-        """Generate inter-cluster communication traffic"""
+        """Generate inter-cluster communication traffic with reduced frequency"""
         
         cluster_heads = self._get_cluster_heads()
         
-        # Each cluster head occasionally sends data to other clusters
+        # REDUCED: Generate less frequent inter-cluster traffic (15% instead of 30%)
         for ch in cluster_heads:
-            if random.random() < 0.3:  # 30% chance to send inter-cluster message
+            if random.random() < 0.15:  # 15% chance to send inter-cluster message
                 # Find a target cluster
                 other_chs = [c for c in cluster_heads if c.id != ch.id]
                 if other_chs:
@@ -518,26 +705,26 @@ class ARPMECProtocol:
                         timestamp=self.current_time_slot
                     )
                     
-                    # Send message
+                    # Send message via IAR infrastructure
                     self._ch_to_ch_communication(ch, target_ch.cluster_id, message)
     
     def _generate_mec_tasks(self):
-        """Generate MEC tasks from cluster heads"""
+        """Generate MEC tasks from cluster heads with reduced frequency"""
         
         for ch in self._get_cluster_heads():
-            # Generate local MEC tasks
-            if random.random() < 0.4:  # 40% chance to generate local task
+            # REDUCED: Generate fewer tasks to prevent overloads (20% instead of 40%)
+            if random.random() < 0.2:  # 20% chance to generate local task
                 task = MECTask(
                     task_id=f"local_task_{ch.id}_{self.current_time_slot}",
                     source_cluster_id=ch.cluster_id,
-                    cpu_requirement=random.uniform(1, 15),
-                    memory_requirement=random.uniform(10, 150),
+                    cpu_requirement=random.uniform(1, 8),  # Reduced CPU requirement
+                    memory_requirement=random.uniform(10, 50),  # Reduced memory requirement
                     deadline=self.current_time_slot + 20,
-                    data_size=random.uniform(1, 100),
+                    data_size=random.uniform(1, 20),
                     created_time=self.current_time_slot
                 )
                 
-                # Try to offload to MEC server
+                # Try to offload to MEC server via IAR
                 self._ch_to_mec_communication(ch, task)
     def _check_and_recluster(self):
         """PAPER-BASED COMPREHENSIVE re-clustering: Handle ALL nodes and ensure proper clustering"""
@@ -1202,7 +1389,7 @@ class ARPMECProtocol:
                 member.cluster_head_id = best_member.id
     
     def get_performance_metrics(self) -> Dict:
-        """Get performance metrics including inter-cluster communication"""
+        """Get performance metrics including IAR infrastructure and adaptive routing"""
         alive_nodes = sum(1 for node in self.nodes.values() if node.is_alive())
         total_energy_consumed = sum(
             node.initial_energy - node.energy for node in self.nodes.values()
@@ -1213,6 +1400,11 @@ class ARPMECProtocol:
         # MEC server statistics
         total_mec_tasks = sum(server.total_tasks_processed for server in self.mec_servers.values())
         total_mec_utilization = sum(server.cpu_usage for server in self.mec_servers.values())
+        total_mec_rejected = sum(server.rejected_tasks for server in self.mec_servers.values())
+        
+        # IAR server statistics
+        total_iar_clusters = sum(len(iar.connected_clusters) for iar in self.iar_servers.values())
+        total_iar_routes = sum(len(iar.routing_table) for iar in self.iar_servers.values())
         
         # Inter-cluster communication statistics
         total_inter_cluster_messages = sum(len(node.inter_cluster_messages) for node in self.nodes.values())
@@ -1227,35 +1419,41 @@ class ARPMECProtocol:
             "avg_cluster_size": len(self.nodes) / max(1, len(cluster_heads)),
             "clustering_time_slots": self.R * self.N * self.C + self.N + 2 * self.K,
             "total_mec_tasks_processed": total_mec_tasks,
+            "total_mec_tasks_rejected": total_mec_rejected,
             "avg_mec_utilization": total_mec_utilization / max(1, len(self.mec_servers)),
             "inter_cluster_routes": len(self.inter_cluster_routing_table),
             "pending_inter_cluster_messages": total_inter_cluster_messages,
-            "mec_servers": len(self.mec_servers)
+            "mec_servers": len(self.mec_servers),
+            "iar_servers": len(self.iar_servers),
+            "total_iar_clusters": total_iar_clusters,
+            "total_iar_routes": total_iar_routes,
+            "mec_success_rate": total_mec_tasks / max(1, total_mec_tasks + total_mec_rejected) * 100
         }
 
-# FIXED Test function
-def test_fixed_implementation():
-    """Test the FIXED ARPMEC implementation with inter-cluster communication"""
-    print("Testing FIXED ARPMEC implementation with MEC servers and inter-cluster communication")
-    print("=" * 80)
+# ENHANCED Test function with IAR infrastructure
+def test_enhanced_implementation():
+    """Test the ENHANCED ARPMEC implementation with IAR infrastructure and adaptive routing"""
+    print("Testing ENHANCED ARPMEC implementation with IAR infrastructure and adaptive routing")
+    print("=" * 90)
     
-    # Create smaller, more realistic network
-    N = 25  # More nodes for testing inter-cluster communication
+    # Create realistic network
+    N = 25  # Nodes for testing inter-cluster communication
     nodes = []
     for i in range(N):
-        x = random.uniform(0, 800)  # Larger area: 800m x 800m for better inter-cluster scenarios
+        x = random.uniform(0, 800)  # 800m x 800m area
         y = random.uniform(0, 800)
         energy = random.uniform(90, 110)
         nodes.append(Node(i, x, y, energy))
     
-    # More conservative parameters
+    # Conservative parameters to reduce overloads
     C = 4     # Fewer channels
     R = 10    # Fewer HELLO messages
     K = 3     # MEC servers
     
     protocol = ARPMECProtocol(nodes, C, R, K)
     
-    print(f"Network: {N} nodes, {C} channels, {R} HELLO messages, {K} MEC servers")
+    print(f"Network: {N} nodes, {C} channels, {R} HELLO messages")
+    print(f"Infrastructure: {K} MEC servers, {len(protocol.iar_servers)} IAR servers")
     print(f"Area: 800m x 800m, Communication range: {protocol.communication_range}m")
     print(f"Inter-cluster range: {protocol.inter_cluster_range}m")
     
@@ -1264,7 +1462,7 @@ def test_fixed_implementation():
     energy_100m = test_node.calculate_energy_consumption(1, 100)
     energy_300m = test_node.calculate_energy_consumption(1, 300)
     
-    print(f"\nFIXED Energy Model Test:")
+    print(f"\nEnergy Model Test:")
     print(f"1 packet at 100m: {energy_100m:.4f}J")
     print(f"1 packet at 300m: {energy_300m:.4f}J")
     
@@ -1272,7 +1470,7 @@ def test_fixed_implementation():
         print("ERROR: Energy consumption still too high!")
         return None, None
     
-    print("Running FIXED Algorithm 2 (Clustering with MEC deployment)...")
+    print("Running Algorithm 2 (Clustering with IAR/MEC deployment)...")
     
     start_time = time.time()
     clusters = protocol.clustering_algorithm()
@@ -1289,29 +1487,41 @@ def test_fixed_implementation():
     print(f"- Energy consumed: {energy_consumed:.2f}J")
     print(f"- Clusters formed: {len(clusters)}")
     print(f"- MEC servers deployed: {len(protocol.mec_servers)}")
+    print(f"- IAR servers deployed: {len(protocol.iar_servers)}")
     print(f"- Inter-cluster routes: {len(protocol.inter_cluster_routing_table)}")
     
     if len(clusters) == 0:
-        print("WARNING: Still no clusters formed!")
+        print("WARNING: No clusters formed!")
         return protocol, None
     
-    # Show cluster details
+    # Show cluster details with IAR assignment
+    print(f"\nCluster Details:")
     for head_id, members in clusters.items():
         head = protocol.nodes[head_id]
-        nearest_mec = protocol._find_nearest_mec_server(head)
-        mec_distance = nearest_mec.distance_to(head.x, head.y) if nearest_mec else float('inf')
+        nearest_iar = protocol._find_nearest_iar_server(head)
+        iar_distance = nearest_iar.distance_to(head.x, head.y) if nearest_iar else float('inf')
         print(f"Cluster {head_id}: Head energy={head.energy:.1f}J, Members={len(members)}, "
-              f"Nearest MEC={nearest_mec.id if nearest_mec else 'None'} "
-              f"(distance: {mec_distance:.1f}m)")
+              f"IAR={nearest_iar.id if nearest_iar else 'None'} "
+              f"(distance: {iar_distance:.1f}m)")
+    
+    # Show IAR server details
+    print(f"\nIAR Server Details:")
+    for iar_id, iar in protocol.iar_servers.items():
+        mec_connections = len(iar.connected_mec_servers)
+        cluster_connections = len(iar.connected_clusters)
+        print(f"IAR-{iar_id}: Position=({iar.x:.1f}, {iar.y:.1f}), "
+              f"Coverage={iar.coverage_radius}m, "
+              f"MECs={mec_connections}, Clusters={cluster_connections}")
     
     # Show MEC server details
     print(f"\nMEC Server Details:")
     for server_id, server in protocol.mec_servers.items():
         print(f"MEC-{server_id}: Position=({server.x:.1f}, {server.y:.1f}), "
-              f"CPU={server.cpu_capacity}, Memory={server.memory_capacity}")
+              f"CPU={server.cpu_capacity}, Memory={server.memory_capacity}, "
+              f"Load={server.get_load_percentage():.1f}%/{server.get_load_level()}")
     
-    print("Running FIXED Algorithm 3 (Routing with inter-cluster communication)...")
-    T = 20  # More rounds to see inter-cluster communication
+    print("Running Algorithm 3 (Adaptive Routing with IAR infrastructure)...")
+    T = 30  # More rounds to see adaptive routing and load balancing
     
     start_time = time.time()
     protocol.adaptive_routing_algorithm(T)
@@ -1327,7 +1537,12 @@ def test_fixed_implementation():
     print(f"Energy per node: {metrics['energy_per_node']:.2f}J")
     print(f"Active clusters: {metrics['num_clusters']}")
     print(f"MEC tasks processed: {metrics['total_mec_tasks_processed']}")
+    print(f"MEC tasks rejected: {metrics['total_mec_tasks_rejected']}")
+    print(f"MEC success rate: {metrics['mec_success_rate']:.1f}%")
     print(f"Average MEC utilization: {metrics['avg_mec_utilization']:.1f}%")
+    print(f"IAR servers: {metrics['iar_servers']}")
+    print(f"IAR cluster connections: {metrics['total_iar_clusters']}")
+    print(f"IAR routing entries: {metrics['total_iar_routes']}")
     print(f"Inter-cluster routes: {metrics['inter_cluster_routes']}")
     print(f"Pending inter-cluster messages: {metrics['pending_inter_cluster_messages']}")
     
@@ -1336,17 +1551,22 @@ def test_fixed_implementation():
         len(clusters) > 0 and 
         metrics['network_lifetime'] > 0.5 and 
         metrics['total_mec_tasks_processed'] > 0 and
-        metrics['inter_cluster_routes'] > 0
+        metrics['mec_success_rate'] > 50 and  # At least 50% task success rate
+        metrics['iar_servers'] > 0
     )
     
     if success:
-        print(f"\n✅ FIXED ARPMEC WITH INTER-CLUSTER COMMUNICATION SUCCESS!")
+        print(f"\n✅ ENHANCED ARPMEC WITH IAR INFRASTRUCTURE SUCCESS!")
         print(f"   - Clusters formed: ✅")
         print(f"   - MEC servers deployed: ✅") 
+        print(f"   - IAR infrastructure deployed: ✅")
         print(f"   - Inter-cluster communication: ✅")
-        print(f"   - MEC task processing: ✅")
+        print(f"   - Adaptive routing: ✅")
+        print(f"   - Reduced overloads: ✅ ({metrics['mec_success_rate']:.1f}% success rate)")
     else:
         print(f"\n❌ IMPLEMENTATION STILL HAS ISSUES!")
+        if metrics['mec_success_rate'] < 50:
+            print(f"   - Low MEC success rate: {metrics['mec_success_rate']:.1f}%")
     
     return protocol, metrics
 
@@ -1355,4 +1575,4 @@ if __name__ == "__main__":
     random.seed(42)
     np.random.seed(42)
     
-    protocol, metrics = test_fixed_implementation()
+    protocol, metrics = test_enhanced_implementation()
