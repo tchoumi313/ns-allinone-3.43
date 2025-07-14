@@ -766,7 +766,7 @@ class ARPMECProtocol:
         
         print(f"Processing {len(idle_nodes)} idle nodes and {len(member_nodes)} cluster members")
         
-        # Step 3: Check existing cluster members for validity
+        # Step 3: Check existing cluster members for validity (STRICTER distance checking)
         for node in member_nodes:
             current_ch = self.nodes.get(node.cluster_head_id) if node.cluster_head_id is not None else None
             need_reassignment = False
@@ -774,9 +774,9 @@ class ARPMECProtocol:
             if not current_ch or not current_ch.is_alive() or current_ch.state != NodeState.CLUSTER_HEAD:
                 need_reassignment = True
                 print(f"Node-{node.id}: CH is invalid/dead")
-            elif node.distance_to(current_ch) > self.communication_range:
+            elif node.distance_to(current_ch) > (self.communication_range * 0.85):  # Stricter: 85% of max range
                 need_reassignment = True
-                print(f"Node-{node.id}: Too far from CH-{current_ch.id} ({node.distance_to(current_ch):.1f}m)")
+                print(f"Node-{node.id}: Too far from CH-{current_ch.id} ({node.distance_to(current_ch):.1f}m > {self.communication_range * 0.85:.1f}m)")
             
             if need_reassignment:
                 # Remove from current cluster
@@ -799,7 +799,9 @@ class ARPMECProtocol:
             for ch in remaining_chs:
                 if ch.id != node.id and ch.is_alive():
                     distance = node.distance_to(ch)
-                    if distance <= self.communication_range and distance < min_distance:
+                    # Use stricter distance limit for joining clusters
+                    max_join_distance = self.communication_range * 0.8  # 80% of max range
+                    if distance <= max_join_distance and distance < min_distance:
                         # Check cluster capacity
                         if len(ch.cluster_members) < self.HUBmax:
                             min_distance = distance

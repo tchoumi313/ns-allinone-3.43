@@ -6,6 +6,7 @@ Simple test script to verify the base ARPMEC implementation works
 import math
 import random
 import time
+
 import numpy as np
 
 print("Testing base ARPMEC implementation...")

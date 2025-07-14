@@ -230,214 +230,144 @@ class ARPMECPacketTracerDemo:
         return packet
     
     def generate_packet_traffic(self):
-        """Generate PROTOCOL-DRIVEN packet traffic - creating visualizations for protocol operations"""
+        """Generate PROTOCOL-HIERARCHY-RESPECTING packet traffic - following ARPMEC communication patterns"""
         
-        # APPROACH: Create visualization packets that represent the same operations the protocol performs
-        # This ensures we see the inter-cluster communications even though they get processed immediately
+        # APPROACH: Follow the actual ARPMEC protocol communication hierarchy
+        # 1. Member → CH (intra-cluster)
+        # 2. CH → IAR → MEC (cluster to infrastructure) 
+        # 3. CH → IAR → MEC → IAR → CH (inter-cluster via infrastructure)
+        # 4. All communications respect range limitations and routing hierarchy
         
-        # Store old counts for debugging
-        old_messages = {}
-        for node in self.protocol.nodes.values():
-            if hasattr(node, 'inter_cluster_messages'):
-                old_messages[node.id] = len(node.inter_cluster_messages)
-        
-        # Step 1: Run actual protocol operations (this generates real traffic)
-        print(f"🔄 Running protocol operations at time {self.protocol.current_time_slot}")
-        
-        # CAPTURE STRATEGY: Generate our own inter-cluster communications and tasks
-        # since the protocol ones get processed immediately
-        cluster_heads = self.protocol._get_cluster_heads()
-        
-        # Generate visible inter-cluster communications
-        if len(cluster_heads) > 1 and random.random() < 0.15:  # 15% chance
-            source_ch = random.choice(cluster_heads)
-            target_ch = random.choice([ch for ch in cluster_heads if ch.id != source_ch.id])
-            
-            # Create a message like the protocol would
-            from arpmec_faithful import InterClusterMessage
-            message = InterClusterMessage(
-                message_id=f"vis_msg_{source_ch.id}_{target_ch.id}_{self.protocol.current_time_slot}",
-                source_cluster_id=source_ch.cluster_id,
-                destination_cluster_id=target_ch.cluster_id,
-                message_type='data',
-                payload={'data': f'sensor_data_from_cluster_{source_ch.cluster_id}'},
-                timestamp=self.protocol.current_time_slot
-            )
-            
-            # Create visualization packet
-            self._create_inter_cluster_packet(source_ch, target_ch, message)
-            print(f"📡 VISUALIZING: CH-{source_ch.id} → CH-{target_ch.id} inter-cluster communication")
-        
-        # Generate visible MEC task communications
-        if cluster_heads and random.random() < 0.25:  # 25% chance
-            source_ch = random.choice(cluster_heads)
-            nearest_iar = self.protocol._find_nearest_iar_server(source_ch)
-            
-            if nearest_iar and nearest_iar.connected_mec_servers:
-                target_mec = self.protocol.mec_servers[nearest_iar.connected_mec_servers[0]]
-                
-                # Create a task like the protocol would
-                from arpmec_faithful import MECTask
-                task = MECTask(
-                    task_id=f"vis_task_{source_ch.id}_{self.protocol.current_time_slot}",
-                    source_cluster_id=source_ch.cluster_id,
-                    cpu_requirement=random.uniform(1, 8),
-                    memory_requirement=random.uniform(10, 40),
-                    deadline=self.protocol.current_time_slot + 10,
-                    data_size=random.uniform(1, 15),
-                    created_time=self.protocol.current_time_slot
-                )
-                
-                # Create visualization packet
-                self._create_mec_task_packet(source_ch, target_mec, task)
-                print(f"🚀 VISUALIZING: CH-{source_ch.id} → MEC-{target_mec.id} task offload")
-        
-        # Run the actual protocol operations in background
-        self.protocol._generate_inter_cluster_traffic()
-        self.protocol._generate_mec_tasks()
-        self.protocol._process_inter_cluster_messages()
-        self.protocol._process_mec_servers()
-        
-        # Step 4: Generate member-to-CH traffic (this is local and frequent)
         cluster_heads = self.protocol._get_cluster_heads()
         cluster_members = [n for n in self.protocol.nodes.values() 
                           if n.state == NodeState.CLUSTER_MEMBER and n.is_alive()]
         
+        # 1. INTRA-CLUSTER COMMUNICATION (Member → CH) - Respects range limits
+        self._generate_intra_cluster_traffic(cluster_heads, cluster_members)
+        
+        # 2. MEC TASK OFFLOADING (CH → IAR → MEC) - Following protocol hierarchy
+        self._generate_mec_task_traffic(cluster_heads)
+        
+        # 3. INTER-CLUSTER COMMUNICATION (CH → IAR → MEC → IAR → CH) - Full protocol path
+        self._generate_inter_cluster_traffic(cluster_heads)
+        
+        # 4. Run actual protocol operations (for metrics and state management)
+        self.protocol._generate_inter_cluster_traffic()
+        self.protocol._generate_mec_tasks()
+        self.protocol._process_inter_cluster_messages()
+        self.protocol._process_mec_servers()
+    
+    def _generate_intra_cluster_traffic(self, cluster_heads, cluster_members):
+        """Generate intra-cluster communication that respects range limits"""
+        
         for member in cluster_members:
-            if member.cluster_head_id and random.random() < 0.08:  # 8% chance for visibility
-                ch = next((ch for ch in cluster_heads if ch.id == member.cluster_head_id), None)
-                if ch:
-                    packet = self.create_packet(
-                        (member.x, member.y), (ch.x, ch.y), [],
-                        'data'
-                    )
-                    packet.description = f"Node-{member.id} → CH-{ch.id}: sensor data"
-                    packet.source_node_id = member.id
-                    packet.dest_node_id = ch.id
-                    packet.routing_events = [
-                        f"Node-{member.id}: Sending sensor data to CH-{ch.id}",
-                        f"CH-{ch.id}: Received sensor data from Node-{member.id}"
-                    ]
-                    self.moving_packets.append(packet)
-    
-    def _create_inter_cluster_packet(self, source_ch: Node, target_ch: Node, message: 'InterClusterMessage'):
-        """Create visualization packet for REAL inter-cluster communication - FIXED to follow paper protocol"""
-        
-        # Find the actual routing path used by the protocol
-        source_iar = self.protocol._find_nearest_iar_server(source_ch)
-        target_iar = self.protocol._find_nearest_iar_server(target_ch)
-        
-        if not source_iar or not target_iar:
-            return
-        
-        # FIXED: Follow the actual ARPMEC protocol routing: CH → IAR → MEC → IAR → CH
-        # NO direct IAR-to-IAR communication without MEC!
-        # ALWAYS ensure MEC → IAR → CH path (never direct MEC → CH)
-        complete_path = [(source_ch.x, source_ch.y)]
-        
-        # Step 1: CH to source IAR
-        complete_path.append((source_iar.x, source_iar.y))
-        
-        # Step 2: Source IAR to MEC (ALWAYS go through MEC for inter-cluster)
-        if source_iar.connected_mec_servers:
-            source_mec_id = source_iar.connected_mec_servers[0]
-            source_mec = self.protocol.mec_servers[source_mec_id]
-            complete_path.append((source_mec.x, source_mec.y))
-            
-            # Step 3: If target IAR uses different MEC, add MEC-to-MEC hop
-            if target_iar.connected_mec_servers:
-                target_mec_id = target_iar.connected_mec_servers[0]
+            if not member.cluster_head_id:
+                continue
                 
-                if source_mec_id != target_mec_id:
-                    target_mec = self.protocol.mec_servers[target_mec_id]
-                    complete_path.append((target_mec.x, target_mec.y))
-                    
-                    # Step 4: Target MEC to target IAR (ALWAYS through IAR)
-                    complete_path.append((target_iar.x, target_iar.y))
-                else:
-                    # Same MEC serves both clusters: MEC → target IAR (ALWAYS through IAR)
-                    complete_path.append((target_iar.x, target_iar.y))
-        
-        # Step 5: Final hop to target CH (ALWAYS IAR → CH, never MEC → CH)
-        complete_path.append((target_ch.x, target_ch.y))
-        
-        # Determine the routing description based on actual path
-        if len(complete_path) == 5:  # CH → IAR → MEC → IAR → CH (same IAR serving both clusters)
-            route_desc = f"CH-{source_ch.id} → IAR-{source_iar.id} → MEC → IAR-{source_iar.id} → CH-{target_ch.id}"
-            hop_descriptions = [
-                f"CH-{source_ch.id} → IAR-{source_iar.id}",
-                f"IAR-{source_iar.id} → MEC",
-                f"MEC → IAR-{source_iar.id} (same IAR)",
-                f"IAR-{source_iar.id} → CH-{target_ch.id}"
-            ]
-        elif len(complete_path) == 5:  # CH → IAR → MEC → IAR → CH (different IARs, same MEC)
-            route_desc = f"CH-{source_ch.id} → IAR-{source_iar.id} → MEC → IAR-{target_iar.id} → CH-{target_ch.id}"
-            hop_descriptions = [
-                f"CH-{source_ch.id} → IAR-{source_iar.id}",
-                f"IAR-{source_iar.id} → MEC",
-                f"MEC → IAR-{target_iar.id}",
-                f"IAR-{target_iar.id} → CH-{target_ch.id}"
-            ]
-        else:  # CH → IAR → MEC → MEC → IAR → CH (different MECs)
-            route_desc = f"CH-{source_ch.id} → IAR-{source_iar.id} → MEC → MEC → IAR-{target_iar.id} → CH-{target_ch.id}"
-            hop_descriptions = [
-                f"CH-{source_ch.id} → IAR-{source_iar.id}",
-                f"IAR-{source_iar.id} → MEC",
-                f"MEC → MEC (inter-MEC routing)",
-                f"MEC → IAR-{target_iar.id}",
-                f"IAR-{target_iar.id} → CH-{target_ch.id}"
-            ]
-        
-        # Create packet with actual protocol path and 5-second path visibility
-        packet = MovingPacket(
-            packet_id=f"inter_cluster_{message.message_id}",
-            source=(source_ch.x, source_ch.y),
-            destination=(target_ch.x, target_ch.y),
-            path=complete_path,
-            current_pos=(source_ch.x, source_ch.y),
-            progress=0.0,
-            packet_type='inter_cluster',
-            color=self.packet_colors['inter_cluster'],
-            size=10,
-            active=True,
-            current_segment=0,
-            description=f"🔄 PROTOCOL-DRIVEN: {route_desc}",
-            source_node_id=source_ch.id,
-            dest_node_id=target_ch.id,
-            routing_events=[
-                f"CH-{source_ch.id}: Protocol initiated inter-cluster message to CH-{target_ch.id}",
-                f"IAR-{source_iar.id}: Routing via MEC infrastructure (NO direct IAR-to-IAR)",
-                f"MEC: Processing inter-cluster routing as per ARPMEC protocol",
-                f"IAR-{target_iar.id}: Delivering to target cluster",
-                f"CH-{target_ch.id}: Inter-cluster message delivered successfully"
-            ],
-            hop_descriptions=hop_descriptions,
-            path_visibility_timer=5.0,  # Path visible for 5 seconds only
-            path_created_time=time.time(),  # Set current time for 5s timer
-            show_path_lines=True  # Initially show path lines
-        )
-        
-        self.moving_packets.append(packet)
-        print(f"✅ Created PROTOCOL-DRIVEN inter-cluster packet: {packet.description}")
+            # Find the assigned cluster head
+            ch = next((ch for ch in cluster_heads if ch.id == member.cluster_head_id), None)
+            if not ch:
+                continue
+                
+            # Check if member is within communication range of CH
+            distance = math.sqrt((member.x - ch.x)**2 + (member.y - ch.y)**2)
+            if distance > self.protocol.communication_range:
+                print(f"⚠️ Member-{member.id} too far from CH-{ch.id} ({distance:.1f}m > {self.protocol.communication_range}m)")
+                continue
+            
+            # Generate traffic with realistic frequency
+            if random.random() < 0.12:  # 12% chance for visibility
+                packet = self.create_packet(
+                    (member.x, member.y), (ch.x, ch.y), [],
+                    'data'
+                )
+                packet.description = f"Intra-cluster: Member-{member.id} → CH-{ch.id} (distance: {distance:.1f}m)"
+                packet.source_node_id = member.id
+                packet.dest_node_id = ch.id
+                packet.routing_events = [
+                    f"Member-{member.id}: Collecting sensor data within range ({distance:.1f}m)",
+                    f"CH-{ch.id}: Received intra-cluster data from Member-{member.id}"
+                ]
+                self.moving_packets.append(packet)
+                print(f"� INTRA-CLUSTER: Member-{member.id} → CH-{ch.id} ({distance:.1f}m)")
     
-    def _create_mec_task_packet(self, source_ch: Node, mec: 'MECServer', task: 'MECTask'):
-        """Create visualization packet for REAL MEC task communication"""
+    def _generate_mec_task_traffic(self, cluster_heads):
+        """Generate MEC task offloading following CH → IAR → MEC hierarchy"""
         
-        # Find the actual IAR used by the protocol
-        source_iar = self.protocol._find_nearest_iar_server(source_ch)
+        for ch in cluster_heads:
+            if random.random() < 0.20:  # 20% chance for MEC tasks
+                # Follow protocol: CH must go through nearest IAR to reach MEC
+                nearest_iar = self.protocol._find_nearest_iar_server(ch)
+                if not nearest_iar:
+                    print(f"❌ CH-{ch.id}: No IAR server within range for MEC task")
+                    continue
+                
+                # Check IAR connectivity
+                if not nearest_iar.connected_mec_servers:
+                    print(f"❌ IAR-{nearest_iar.id}: No connected MEC servers")
+                    continue
+                
+                # Select MEC server through IAR (protocol hierarchy)
+                mec_id = nearest_iar.connected_mec_servers[0]  # Use first available
+                target_mec = self.protocol.mec_servers[mec_id]
+                
+                # Verify IAR-CH distance
+                iar_distance = math.sqrt((ch.x - nearest_iar.x)**2 + (ch.y - nearest_iar.y)**2)
+                if iar_distance > nearest_iar.coverage_radius:
+                    print(f"⚠️ CH-{ch.id} outside IAR-{nearest_iar.id} coverage ({iar_distance:.1f}m)")
+                    continue
+                
+                # Create protocol-compliant MEC task packet
+                self._create_mec_task_packet_hierarchy(ch, nearest_iar, target_mec)
+    
+    def _generate_inter_cluster_traffic(self, cluster_heads):
+        """Generate inter-cluster communication following full protocol hierarchy"""
         
-        if not source_iar:
+        if len(cluster_heads) < 2:
             return
+            
+        if random.random() < 0.18:  # 18% chance for inter-cluster
+            source_ch = random.choice(cluster_heads)
+            target_ch = random.choice([ch for ch in cluster_heads if ch.id != source_ch.id])
+            
+            # Follow ARPMEC protocol: CH → IAR → MEC → IAR → CH (NO shortcuts!)
+            source_iar = self.protocol._find_nearest_iar_server(source_ch)
+            target_iar = self.protocol._find_nearest_iar_server(target_ch)
+            
+            if not source_iar or not target_iar:
+                print(f"❌ Inter-cluster blocked: Missing IAR coverage")
+                return
+                
+            # Verify both CHs are within IAR coverage
+            source_distance = math.sqrt((source_ch.x - source_iar.x)**2 + (source_ch.y - source_iar.y)**2)
+            target_distance = math.sqrt((target_ch.x - target_iar.x)**2 + (target_ch.y - target_iar.y)**2)
+            
+            if source_distance > source_iar.coverage_radius:
+                print(f"⚠️ Source CH-{source_ch.id} outside IAR coverage ({source_distance:.1f}m)")
+                return
+                
+            if target_distance > target_iar.coverage_radius:
+                print(f"⚠️ Target CH-{target_ch.id} outside IAR coverage ({target_distance:.1f}m)")
+                return
+            
+            # Create protocol-compliant inter-cluster packet
+            self._create_inter_cluster_packet_hierarchy(source_ch, target_ch, source_iar, target_iar)
+    
+    def _create_mec_task_packet_hierarchy(self, source_ch: Node, iar: 'IARServer', mec: 'MECServer'):
+        """Create MEC task packet following protocol hierarchy: CH → IAR → MEC"""
         
-        # Build the TRUE path as used by the protocol: CH -> IAR -> MEC
+        # Build the protocol-compliant path: CH → IAR → MEC (NO direct CH → MEC!)
         complete_path = [
-            (source_ch.x, source_ch.y),
-            (source_iar.x, source_iar.y),
-            (mec.x, mec.y)
+            (source_ch.x, source_ch.y),    # Start at cluster head
+            (iar.x, iar.y),                # Must go through IAR first
+            (mec.x, mec.y)                 # Finally reach MEC server
         ]
         
+        # Create task identifier
+        task_id = f"task_{source_ch.id}_{self.protocol.current_time_slot}"
+        
         packet = MovingPacket(
-            packet_id=f"mec_task_{task.task_id}",
+            packet_id=f"mec_task_{task_id}",
             source=(source_ch.x, source_ch.y),
             destination=(mec.x, mec.y),
             path=complete_path,
@@ -448,25 +378,127 @@ class ARPMECPacketTracerDemo:
             size=8,
             active=True,
             current_segment=0,
-            description=f"🚀 PROTOCOL-DRIVEN: CH-{source_ch.id} → IAR-{source_iar.id} → MEC-{mec.id} (Task: {task.task_id})",
+            description=f"MEC Task: CH-{source_ch.id} → IAR-{iar.id} → MEC-{mec.id}",
             source_node_id=source_ch.id,
             dest_node_id=mec.id,
             routing_events=[
-                f"CH-{source_ch.id}: Protocol generated MEC task {task.task_id}",
-                f"IAR-{source_iar.id}: Routing task to optimal MEC server",
+                f"CH-{source_ch.id}: Generated MEC task (requires IAR routing)",
+                f"IAR-{iar.id}: Routing task to optimal MEC server",
                 f"MEC-{mec.id}: Processing task (load: {mec.get_load_percentage():.1f}%)"
             ],
             hop_descriptions=[
-                f"CH-{source_ch.id} → IAR-{source_iar.id}",
-                f"IAR-{source_iar.id} → MEC-{mec.id}"
+                f"CH-{source_ch.id} → IAR-{iar.id}",
+                f"IAR-{iar.id} → MEC-{mec.id}"
             ],
-            path_visibility_timer=5.0,  # Path visible for 5 seconds only
-            path_created_time=time.time(),  # Set current time for 5s timer
-            show_path_lines=True  # Initially show path lines
+            path_visibility_timer=5.0,
+            path_created_time=time.time(),
+            show_path_lines=True
         )
         
         self.moving_packets.append(packet)
-        print(f"✅ Created PROTOCOL-DRIVEN MEC task packet: {packet.description}")
+        print(f"🚀 MEC HIERARCHY: CH-{source_ch.id} → IAR-{iar.id} → MEC-{mec.id}")
+    
+    def _create_inter_cluster_packet_hierarchy(self, source_ch: Node, target_ch: Node, 
+                                             source_iar: 'IARServer', target_iar: 'IARServer'):
+        """Create inter-cluster packet following FULL protocol hierarchy"""
+        
+        # CRITICAL: Follow COMPLETE ARPMEC protocol path - NO shortcuts allowed!
+        complete_path = [(source_ch.x, source_ch.y)]
+        
+        # Step 1: Source CH → Source IAR (mandatory first hop)
+        complete_path.append((source_iar.x, source_iar.y))
+        
+        # Step 2: Source IAR → MEC (ALWAYS through MEC for inter-cluster)
+        if source_iar.connected_mec_servers:
+            source_mec_id = source_iar.connected_mec_servers[0]
+            source_mec = self.protocol.mec_servers[source_mec_id]
+            complete_path.append((source_mec.x, source_mec.y))
+            
+            # Step 3: Check if different MEC needed for target IAR
+            if target_iar.connected_mec_servers:
+                target_mec_id = target_iar.connected_mec_servers[0]
+                
+                if source_mec_id != target_mec_id:
+                    # Different MEC servers: add MEC-to-MEC hop
+                    target_mec = self.protocol.mec_servers[target_mec_id]
+                    complete_path.append((target_mec.x, target_mec.y))
+                    
+                    # Step 4: Target MEC → Target IAR (mandatory)
+                    complete_path.append((target_iar.x, target_iar.y))
+                    routing_desc = f"CH-{source_ch.id} → IAR-{source_iar.id} → MEC-{source_mec_id} → MEC-{target_mec_id} → IAR-{target_iar.id} → CH-{target_ch.id}"
+                    hop_events = [
+                        f"CH-{source_ch.id}: Initiating inter-cluster message",
+                        f"IAR-{source_iar.id}: Routing to MEC infrastructure", 
+                        f"MEC-{source_mec_id}: Processing inter-cluster routing",
+                        f"MEC-{target_mec_id}: Receiving inter-cluster message",
+                        f"IAR-{target_iar.id}: Delivering to target cluster",
+                        f"CH-{target_ch.id}: Inter-cluster message received"
+                    ]
+                else:
+                    # Same MEC serves both: MEC → Target IAR (mandatory)
+                    complete_path.append((target_iar.x, target_iar.y))
+                    routing_desc = f"CH-{source_ch.id} → IAR-{source_iar.id} → MEC-{source_mec_id} → IAR-{target_iar.id} → CH-{target_ch.id}"
+                    hop_events = [
+                        f"CH-{source_ch.id}: Initiating inter-cluster message",
+                        f"IAR-{source_iar.id}: Routing to shared MEC server",
+                        f"MEC-{source_mec_id}: Processing inter-cluster routing",
+                        f"IAR-{target_iar.id}: Receiving from shared MEC",
+                        f"CH-{target_ch.id}: Inter-cluster message received"
+                    ]
+        
+        # Step 5: Final hop Target IAR → Target CH (mandatory)
+        complete_path.append((target_ch.x, target_ch.y))
+        
+        # Create the protocol-compliant packet
+        packet = MovingPacket(
+            packet_id=f"inter_cluster_{source_ch.id}_{target_ch.id}_{self.protocol.current_time_slot}",
+            source=(source_ch.x, source_ch.y),
+            destination=(target_ch.x, target_ch.y),
+            path=complete_path,
+            current_pos=(source_ch.x, source_ch.y),
+            progress=0.0,
+            packet_type='inter_cluster',
+            color=self.packet_colors['inter_cluster'],
+            size=10,
+            active=True,
+            current_segment=0,
+            description=f"Inter-cluster HIERARCHY: {routing_desc}",
+            source_node_id=source_ch.id,
+            dest_node_id=target_ch.id,
+            routing_events=hop_events,
+            hop_descriptions=[f"Hop {i+1}" for i in range(len(complete_path)-1)],
+            path_visibility_timer=8.0,  # Longer visibility for complex inter-cluster paths
+            path_created_time=time.time(),
+            show_path_lines=True
+        )
+        
+        self.moving_packets.append(packet)
+        print(f"📡 INTER-CLUSTER HIERARCHY: {routing_desc}")
+        
+        # Create corresponding message in protocol
+        from arpmec_faithful import InterClusterMessage
+        message = InterClusterMessage(
+            message_id=f"hierarchy_msg_{source_ch.id}_{target_ch.id}_{self.protocol.current_time_slot}",
+            source_cluster_id=source_ch.cluster_id,
+            destination_cluster_id=target_ch.cluster_id,
+            message_type='data',
+            payload={'data': f'hierarchy_data_cluster_{source_ch.cluster_id}'},
+            timestamp=self.protocol.current_time_slot
+        )
+    def _create_inter_cluster_packet(self, source_ch: Node, target_ch: Node, message: 'InterClusterMessage'):
+        """Simplified inter-cluster packet creation - delegates to hierarchy method"""
+        source_iar = self.protocol._find_nearest_iar_server(source_ch)
+        target_iar = self.protocol._find_nearest_iar_server(target_ch)
+        
+        if source_iar and target_iar:
+            self._create_inter_cluster_packet_hierarchy(source_ch, target_ch, source_iar, target_iar)
+    
+    def _create_mec_task_packet(self, source_ch: Node, mec: 'MECServer', task: 'MECTask'):
+        """Simplified MEC task packet creation - delegates to hierarchy method"""
+        source_iar = self.protocol._find_nearest_iar_server(source_ch)
+        
+        if source_iar:
+            self._create_mec_task_packet_hierarchy(source_ch, source_iar, mec)
     
     def draw_network(self, ax, frame_time: float):
         """Draw the network state with better layout and smaller nodes"""
@@ -488,13 +520,19 @@ class ARPMECPacketTracerDemo:
                                 fill=False, color='purple', alpha=0.15, linestyle=':')
             ax.add_patch(coverage)
         
-        # 2. Draw cluster boundaries
+        # 2. Draw cluster boundaries with RANGE LIMITS CLEARLY SHOWN
         colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown', 'pink', 'gray']
         for i, ch in enumerate(cluster_heads):
             color = colors[i % len(colors)]
+            # Show actual communication range limit (solid line)
             boundary = plt.Circle((ch.x, ch.y), self.protocol.communication_range,
-                                fill=False, color=color, alpha=0.3, linestyle='--')
+                                fill=False, color=color, alpha=0.6, linestyle='-', linewidth=2)
             ax.add_patch(boundary)
+            
+            # Show effective cluster range (75% for stricter clustering - dashed line)
+            effective_range = plt.Circle((ch.x, ch.y), self.protocol.communication_range * 0.75,
+                                       fill=False, color=color, alpha=0.4, linestyle='--', linewidth=1)
+            ax.add_patch(effective_range)
         
         # 3. Draw infrastructure connections
         for iar in self.protocol.iar_servers.values():
@@ -504,21 +542,54 @@ class ARPMECPacketTracerDemo:
                     ax.plot([iar.x, mec.x], [iar.y, mec.y],
                            'purple', alpha=0.5, linewidth=1.5, linestyle=':')
         
-        # 4. Draw communication links
+        # 4. Draw communication links with HIERARCHY EMPHASIS
         for ch in cluster_heads:
-            # CH to IAR
+            # CH to IAR (CRITICAL HIERARCHY LINK - thick line)
             nearest_iar = self.protocol._find_nearest_iar_server(ch)
             if nearest_iar:
+                iar_distance = math.sqrt((ch.x - nearest_iar.x)**2 + (ch.y - nearest_iar.y)**2)
+                
+                # Color code by distance: green=good, yellow=far, red=out of range
+                if iar_distance <= nearest_iar.coverage_radius * 0.7:
+                    link_color = 'green'
+                    alpha = 0.8
+                elif iar_distance <= nearest_iar.coverage_radius:
+                    link_color = 'orange'
+                    alpha = 0.7
+                else:
+                    link_color = 'red'
+                    alpha = 0.9
+                
                 ax.plot([ch.x, nearest_iar.x], [ch.y, nearest_iar.y],
-                       'darkviolet', alpha=0.6, linewidth=1.5, linestyle='--')
+                       link_color, alpha=alpha, linewidth=3, linestyle='-')
+                
+                # Add distance label
+                mid_x = (ch.x + nearest_iar.x) / 2
+                mid_y = (ch.y + nearest_iar.y) / 2
+                ax.text(mid_x, mid_y, f'{iar_distance:.0f}m', 
+                       ha='center', fontsize=8, color=link_color, weight='bold',
+                       bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8))
             
-            # Member to CH
+            # Member to CH (show only valid connections within range)
             for member_id in ch.cluster_members:
                 if member_id in self.protocol.nodes:
                     member = self.protocol.nodes[member_id]
                     if member.is_alive():
-                        ax.plot([ch.x, member.x], [ch.y, member.y],
-                               'gray', alpha=0.4, linewidth=0.8)
+                        member_distance = math.sqrt((ch.x - member.x)**2 + (ch.y - member.y)**2)
+                        
+                        # Only show if within effective range
+                        if member_distance <= self.protocol.communication_range * 0.75:
+                            ax.plot([ch.x, member.x], [ch.y, member.y],
+                                   'gray', alpha=0.5, linewidth=1)
+                        else:
+                            # Show problematic connections in red
+                            ax.plot([ch.x, member.x], [ch.y, member.y],
+                                   'red', alpha=0.8, linewidth=2, linestyle=':')
+                            
+                            # Mark as problematic
+                            mid_x = (ch.x + member.x) / 2
+                            mid_y = (ch.y + member.y) / 2
+                            ax.text(mid_x, mid_y, '⚠️', ha='center', fontsize=12)
         
         # 5. Draw nodes (smaller sizes)
         for node in self.protocol.nodes.values():
@@ -698,14 +769,42 @@ class ARPMECPacketTracerDemo:
                     facecolor='lightgreen', alpha=0.95, edgecolor='darkgreen'),
                     color='darkgreen', weight='bold', zorder=200)
         
-        # 9. Add network statistics
+        # 9. Add network statistics with HIERARCHY COMPLIANCE
         active_packets = len(self.moving_packets)
         avg_mec_load = sum(s.get_load_percentage() for s in self.protocol.mec_servers.values()) / len(self.protocol.mec_servers)
         
-        stats_text = f"ARPMEC Protocol with IAR Infrastructure\n"
+        # Count hierarchy compliance
+        valid_connections = 0
+        problematic_connections = 0
+        
+        for ch in cluster_heads:
+            # Check CH-IAR distances
+            nearest_iar = self.protocol._find_nearest_iar_server(ch)
+            if nearest_iar:
+                iar_distance = math.sqrt((ch.x - nearest_iar.x)**2 + (ch.y - nearest_iar.y)**2)
+                if iar_distance <= nearest_iar.coverage_radius:
+                    valid_connections += 1
+                else:
+                    problematic_connections += 1
+            
+            # Check member-CH distances
+            for member_id in ch.cluster_members:
+                if member_id in self.protocol.nodes:
+                    member = self.protocol.nodes[member_id]
+                    if member.is_alive():
+                        member_distance = math.sqrt((ch.x - member.x)**2 + (ch.y - member.y)**2)
+                        if member_distance <= self.protocol.communication_range * 0.75:
+                            valid_connections += 1
+                        else:
+                            problematic_connections += 1
+        
+        hierarchy_compliance = (valid_connections / max(valid_connections + problematic_connections, 1)) * 100
+        
+        stats_text = f"ARPMEC Protocol with COMMUNICATION HIERARCHY\n"
         stats_text += f"Time: {frame_time:.1f}s | Active Packets: {active_packets}\n"
         stats_text += f"Clusters: {len(cluster_heads)} | Members: {len(cluster_members)} | Idle: {len(idle_nodes)}\n"
         stats_text += f"Infrastructure: {len(self.protocol.iar_servers)} IAR, {len(self.protocol.mec_servers)} MEC\n"
+        stats_text += f"Hierarchy Compliance: {hierarchy_compliance:.1f}% ({valid_connections} valid, {problematic_connections} problematic)\n"
         stats_text += f"Average MEC Load: {avg_mec_load:.1f}%"
         
         ax.text(0.02, 0.98, stats_text, transform=ax.transAxes, fontsize=10,
@@ -734,8 +833,8 @@ class ARPMECPacketTracerDemo:
         ax.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1.02, 0.5), 
                  fontsize=10, fancybox=True, shadow=True, framealpha=0.95)
         
-        ax.set_title(f'ARPMEC Protocol - PROTOCOL-DRIVEN Packet Tracer Animation\n'
-                    f'🔄 Paper-Faithful: CH → IAR → MEC → IAR → CH | Real Protocol-Driven Traffic', 
+        ax.set_title(f'ARPMEC PROTOCOL with COMMUNICATION HIERARCHY\n'
+                    f'🔄 Range-Limited: Member ↔ CH ↔ IAR ↔ MEC | Real Protocol-Driven Traffic | Distance Validation', 
                     fontsize=12, weight='bold', pad=10)
         ax.set_xlabel('X Position (meters)', fontsize=10)
         ax.set_ylabel('Y Position (meters)', fontsize=10)
@@ -752,7 +851,7 @@ class ARPMECPacketTracerDemo:
         # Initialize protocol time tracking
         self.protocol_time_slot = 0
         self.last_reclustering_time = 0
-        self.reclustering_interval = 200  # Re-cluster every 200 frames
+        self.reclustering_interval = 50  # Re-cluster every 50 frames (10 seconds) - more frequent
         
         # Animation function
         def animate(frame):
@@ -761,8 +860,8 @@ class ARPMECPacketTracerDemo:
             # CRITICAL: Advance protocol time to sync with animation
             self.protocol.current_time_slot = self.protocol_time_slot
             
-            # Step 1: Handle node mobility (every frame for smooth movement)
-            self._update_node_mobility(frame_time)
+            # Step 1: Handle node mobility and check for significant movement
+            significant_movement = self._update_node_mobility(frame_time)
             
             # Step 2: Generate protocol-driven traffic (every 30 frames for visibility)
             if frame % 30 == 0:
@@ -786,8 +885,20 @@ class ARPMECPacketTracerDemo:
                     for member in members:
                         self.protocol._fixed_cluster_member_operations(member, self.protocol_time_slot)
             
-            # Step 4: Handle dynamic re-clustering due to mobility
+            # Step 4: Handle dynamic re-clustering - IMPROVED LOGIC
+            should_recluster = False
+            
+            # Time-based reclustering (less frequent)
             if frame - self.last_reclustering_time > self.reclustering_interval:
+                should_recluster = True
+                print(f"⏰ Time-based reclustering triggered (every {self.reclustering_interval} frames)")
+            
+            # Distance-based reclustering (immediate when nodes move too far)
+            elif significant_movement:
+                should_recluster = True
+                print(f"📍 Distance-based reclustering triggered (nodes moved significantly)")
+            
+            if should_recluster:
                 self.last_reclustering_time = frame
                 self._trigger_protocol_reclustering()
             
@@ -816,16 +927,70 @@ class ARPMECPacketTracerDemo:
             anim.save(filename.replace('.mp4', '.gif'), writer='pillow', fps=fps//2)
     
     def _update_node_mobility(self, frame_time: float):
-        """Update node positions based on mobility model (from protocol)"""
+        """Update node positions with SLOWER movement and distance-based reclustering trigger"""
+        
+        significant_movement = False
         
         for node in self.protocol.nodes.values():
-            if node.is_alive():
-                # Update node position using protocol's mobility model
-                node.update_mobility((0, self.area_size, 0, self.area_size))
+            if not node.is_alive():
+                continue
                 
-                # Ensure nodes stay within bounds
-                node.x = max(50, min(self.area_size - 50, node.x))
-                node.y = max(50, min(self.area_size - 50, node.y))
+            # Store original position to check for significant movement
+            old_x, old_y = node.x, node.y
+            
+            # Dramatically reduce movement speed
+            original_speed = getattr(node, 'speed', 2.0)
+            node.speed = 0.2  # Reduce from ~2.0 to 0.2 (10x slower)
+            
+            # Update node position using protocol's mobility model
+            node.update_mobility((0, self.area_size, 0, self.area_size))
+            
+            # Restore original speed
+            node.speed = original_speed
+            
+            # Ensure nodes stay within bounds
+            node.x = max(50, min(self.area_size - 50, node.x))
+            node.y = max(50, min(self.area_size - 50, node.y))
+            
+            # Check for significant movement (>20 meters)
+            movement_distance = math.sqrt((node.x - old_x)**2 + (node.y - old_y)**2)
+            if movement_distance > 20:
+                significant_movement = True
+            
+            # ENFORCE CLUSTER DISTANCE CONSTRAINTS for cluster members
+            if (node.state == NodeState.CLUSTER_MEMBER and 
+                hasattr(node, 'cluster_head_id') and node.cluster_head_id):
+                
+                # Find cluster head
+                cluster_head = None
+                for ch_node in self.protocol.nodes.values():
+                    if ch_node.id == node.cluster_head_id and ch_node.state == NodeState.CLUSTER_HEAD:
+                        cluster_head = ch_node
+                        break
+                
+                if cluster_head:
+                    # Calculate distance to cluster head
+                    distance = math.sqrt((node.x - cluster_head.x)**2 + (node.y - cluster_head.y)**2)
+                    max_cluster_distance = self.protocol.communication_range * 0.75  # 75% of comm range
+                    
+                    if distance > max_cluster_distance:
+                        # Trigger immediate reclustering when nodes are too far
+                        print(f"⚠️ Node-{node.id} too far from CH-{cluster_head.id} ({distance:.1f}m) - triggering reclustering")
+                        significant_movement = True
+                        
+                        # Move node closer to stay connected temporarily
+                        direction_x = (cluster_head.x - node.x) / distance
+                        direction_y = (cluster_head.y - node.y) / distance
+                        
+                        # Place node at maximum allowed distance
+                        node.x = cluster_head.x - direction_x * max_cluster_distance
+                        node.y = cluster_head.y - direction_y * max_cluster_distance
+                        
+                        # Ensure still within area bounds
+                        node.x = max(50, min(self.area_size - 50, node.x))
+                        node.y = max(50, min(self.area_size - 50, node.y))
+        
+        return significant_movement
     
     def _trigger_protocol_reclustering(self):
         """Trigger protocol-driven re-clustering due to mobility"""
@@ -854,7 +1019,7 @@ class ARPMECPacketTracerDemo:
         # Initialize protocol time tracking - SAME as video version
         self.protocol_time_slot = 0
         self.last_reclustering_time = 0
-        self.reclustering_interval = 200  # Re-cluster every 200 frames
+        self.reclustering_interval = 50  # Re-cluster every 50 frames (10 seconds) - more frequent
         
         # Animation function - IDENTICAL to video version
         def animate_live(frame):
@@ -863,8 +1028,8 @@ class ARPMECPacketTracerDemo:
             # CRITICAL: Advance protocol time to sync with animation
             self.protocol.current_time_slot = self.protocol_time_slot
             
-            # Step 1: Handle node mobility (every frame for smooth movement)
-            self._update_node_mobility(frame_time)
+            # Step 1: Handle node mobility and check for significant movement
+            significant_movement = self._update_node_mobility(frame_time)
             
             # Step 2: Generate protocol-driven traffic (every 30 frames for visibility)
             if frame % 30 == 0:
@@ -888,8 +1053,20 @@ class ARPMECPacketTracerDemo:
                     for member in members:
                         self.protocol._fixed_cluster_member_operations(member, self.protocol_time_slot)
             
-            # Step 4: Handle dynamic re-clustering due to mobility
+            # Step 4: Handle dynamic re-clustering - IMPROVED LOGIC
+            should_recluster = False
+            
+            # Time-based reclustering (less frequent)
             if frame - self.last_reclustering_time > self.reclustering_interval:
+                should_recluster = True
+                print(f"⏰ Time-based reclustering triggered (every {self.reclustering_interval} frames)")
+            
+            # Distance-based reclustering (immediate when nodes move too far)
+            elif significant_movement:
+                should_recluster = True
+                print(f"📍 Distance-based reclustering triggered (nodes moved significantly)")
+            
+            if should_recluster:
                 self.last_reclustering_time = frame
                 self._trigger_protocol_reclustering()
             

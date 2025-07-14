@@ -16,16 +16,14 @@ import random
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Set
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from matplotlib.patches import Circle
+from typing import Dict, List, Optional, Set, Tuple
 
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
 # Import the VERIFIED working ARPMEC protocol
-from arpmec_faithful import (
-    ARPMECProtocol, Node, NodeState, IARServer, MECServer, MECTask,
-    InterClusterMessage
-)
+from arpmec_faithful import (ARPMECProtocol, IARServer, InterClusterMessage,
+                             MECServer, MECTask, Node, NodeState)
+from matplotlib.patches import Circle
 
 # =====================================================================================
 # STEP 1: VERIFY BASE ARPMEC PROTOCOL WORKS

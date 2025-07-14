@@ -882,7 +882,7 @@ class ARPMECAdvancedSecurityDemo:
             trail_positions=[(source_node.x, source_node.y)],
             color=self.attack_colors.get(attack_type.value, '#FF0000'),
             size=150,
-            speed=50.0,  # pixels per second
+            speed=30.0,  # pixels per second
             active=True,
             pulse_phase=0.0,
             creation_time=time.time()

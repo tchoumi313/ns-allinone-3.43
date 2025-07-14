@@ -1,0 +1,217 @@
+{
+  "num_runs": 5,
+  "individual_results": [
+    {
+      "run_id": 0,
+      "security": {
+        "total_attacks": 13,
+        "detected_attacks": 5,
+        "detection_rate": 38.46153846153847,
+        "precision": 100.0,
+        "recall": 38.46153846153847,
+        "false_positive_rate": 0.0,
+        "avg_detection_time_ms": 0.028848648071289062,
+        "attack_types": {
+          "dos": 13
+        },
+        "blocked_attacks": 5,
+        "block_rate": 38.46153846153847
+      },
+      "performance": {
+        "avg_latency_ms": 0.46752452850341797,
+        "max_latency_ms": 3.3674240112304688,
+        "avg_energy_consumption": -36.2181655215057,
+        "final_energy_consumption": 44.76583873867247,
+        "avg_pdr": 72.63348181657209,
+        "min_pdr": 58.78787878787879,
+        "avg_bandwidth_utilization": 27.979284484169476,
+        "max_bandwidth_utilization": 77.39694181220538,
+        "avg_throughput": 54485.577677236244,
+        "max_throughput": 97000.0,
+        "network_lifetime": 0.02883315086364746
+      },
+      "final_stats": {
+        "alive_nodes": 25,
+        "active_clusters": 14,
+        "simulation_time": 0.028848648071289062
+      }
+    },
+    {
+      "run_id": 1,
+      "security": {
+        "total_attacks": 8,
+        "detected_attacks": 1,
+        "detection_rate": 12.5,
+        "precision": 100.0,
+        "recall": 12.5,
+        "false_positive_rate": 0.0,
+        "avg_detection_time_ms": 0.02765655517578125,
+        "attack_types": {
+          "dos": 8
+        },
+        "blocked_attacks": 1,
+        "block_rate": 12.5
+      },
+      "performance": {
+        "avg_latency_ms": 0.4061555862426758,
+        "max_latency_ms": 0.8370876312255859,
+        "avg_energy_consumption": -115.57452997532431,
+        "final_energy_consumption": -34.14352574193576,
+        "avg_pdr": 63.81438523102102,
+        "min_pdr": 50.0,
+        "avg_bandwidth_utilization": 37.395005825622526,
+        "max_bandwidth_utilization": 79.00550265536225,
+        "avg_throughput": 54840.0,
+        "max_throughput": 98000.0,
+        "network_lifetime": 0.026618480682373047
+      },
+      "final_stats": {
+        "alive_nodes": 25,
+        "active_clusters": 14,
+        "simulation_time": 0.02663898468017578
+      }
+    },
+    {
+      "run_id": 2,
+      "security": {
+        "total_attacks": 16,
+        "detected_attacks": 5,
+        "detection_rate": 31.25,
+        "precision": 100.0,
+        "recall": 31.25,
+        "false_positive_rate": 0.0,
+        "avg_detection_time_ms": 0.17099380493164062,
+        "attack_types": {
+          "dos": 16
+        },
+        "blocked_attacks": 5,
+        "block_rate": 31.25
+      },
+      "performance": {
+        "avg_latency_ms": 0.4006004333496094,
+        "max_latency_ms": 0.8039474487304688,
+        "avg_energy_consumption": -111.83154533199682,
+        "final_energy_consumption": -33.98954156345249,
+        "avg_pdr": 46.31029127709596,
+        "min_pdr": 33.33333333333333,
+        "avg_bandwidth_utilization": 55.56177982190885,
+        "max_bandwidth_utilization": 79.36751179712746,
+        "avg_throughput": 50180.0,
+        "max_throughput": 81000.0,
+        "network_lifetime": 0.026762008666992188
+      },
+      "final_stats": {
+        "alive_nodes": 25,
+        "active_clusters": 16,
+        "simulation_time": 0.02684926986694336
+      }
+    },
+    {
+      "run_id": 3,
+      "security": {
+        "total_attacks": 18,
+        "detected_attacks": 5,
+        "detection_rate": 27.77777777777778,
+        "precision": 100.0,
+        "recall": 27.77777777777778,
+        "false_positive_rate": 0.0,
+        "avg_detection_time_ms": 0.03285408020019531,
+        "attack_types": {
+          "dos": 18
+        },
+        "blocked_attacks": 5,
+        "block_rate": 27.77777777777778
+      },
+      "performance": {
+        "avg_latency_ms": 0.2953195571899414,
+        "max_latency_ms": 0.5137920379638672,
+        "avg_energy_consumption": -99.77617522269682,
+        "final_energy_consumption": -18.163172618265406,
+        "avg_pdr": 92.15095008970698,
+        "min_pdr": 50.0,
+        "avg_bandwidth_utilization": 2.7575224475817213,
+        "max_bandwidth_utilization": 6.833272571758001,
+        "avg_throughput": 51800.0,
+        "max_throughput": 103000.0,
+        "network_lifetime": 0.0220181941986084
+      },
+      "final_stats": {
+        "alive_nodes": 25,
+        "active_clusters": 11,
+        "simulation_time": 0.022060871124267578
+      }
+    },
+    {
+      "run_id": 4,
+      "security": {
+        "total_attacks": 15,
+        "detected_attacks": 10,
+        "detection_rate": 66.66666666666666,
+        "precision": 100.0,
+        "recall": 66.66666666666666,
+        "false_positive_rate": 0.0,
+        "avg_detection_time_ms": 0.12142658233642578,
+        "attack_types": {
+          "dos": 15
+        },
+        "blocked_attacks": 10,
+        "block_rate": 66.66666666666666
+      },
+      "performance": {
+        "avg_latency_ms": 0.48804283142089844,
+        "max_latency_ms": 0.9238719940185547,
+        "avg_energy_consumption": -68.57510724071142,
+        "final_energy_consumption": 8.134896522957263,
+        "avg_pdr": 51.60365906867568,
+        "min_pdr": 45.80152671755725,
+        "avg_bandwidth_utilization": 50.540720646226035,
+        "max_bandwidth_utilization": 79.2540245848458,
+        "avg_throughput": 47340.0,
+        "max_throughput": 83000.0,
+        "network_lifetime": 0.032434940338134766
+      },
+      "final_stats": {
+        "alive_nodes": 25,
+        "active_clusters": 16,
+        "simulation_time": 0.03248238563537598
+      }
+    }
+  ],
+  "avg_security": {
+    "total_attacks": 14.0,
+    "detected_attacks": 5.2,
+    "detection_rate": 35.33119658119658,
+    "precision": 100.0,
+    "recall": 35.33119658119658,
+    "false_positive_rate": 0.0,
+    "avg_detection_time_ms": 0.0763559341430664,
+    "attack_types": {
+      "dos": 13
+    },
+    "blocked_attacks": 5.2,
+    "block_rate": 35.33119658119658
+  },
+  "avg_performance": {
+    "avg_latency_ms": 0.4115285873413086,
+    "max_latency_ms": 1.289224624633789,
+    "avg_energy_consumption": -86.39510465844702,
+    "final_energy_consumption": -6.6791009324047845,
+    "avg_pdr": 65.30255349661435,
+    "min_pdr": 47.584547767753875,
+    "avg_bandwidth_utilization": 34.84686264510172,
+    "max_bandwidth_utilization": 64.37145068425977,
+    "avg_throughput": 51729.11553544724,
+    "max_throughput": 92400.0,
+    "network_lifetime": 0.02733335494995117
+  },
+  "std_deviations": {
+    "security": {
+      "detection_rate": 19.9166046569732
+    },
+    "performance": {
+      "latency": 0.0752376357830558,
+      "energy": 33.58862141606919,
+      "pdr": 18.20136867931791
+    }
+  }
+}

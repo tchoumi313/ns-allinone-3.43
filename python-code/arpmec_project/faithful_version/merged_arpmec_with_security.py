@@ -34,21 +34,19 @@ Date: July 2025
 
 import math
 import random
-import time
 import threading
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Set
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from matplotlib.patches import Circle, Rectangle, FancyBboxPatch
-import numpy as np
+from typing import Dict, List, Optional, Set, Tuple
 
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
+import numpy as np
 # Import base ARPMEC components
-from arpmec_faithful import (
-    ARPMECProtocol, Node, NodeState, IARServer, MECServer, MECTask,
-    InterClusterMessage
-)
+from arpmec_faithful import (ARPMECProtocol, IARServer, InterClusterMessage,
+                             MECServer, MECTask, Node, NodeState)
+from matplotlib.patches import Circle, FancyBboxPatch, Rectangle
 
 # =====================================================================================
 # SECURITY ENUMS AND DATA STRUCTURES
@@ -56,6 +54,7 @@ from arpmec_faithful import (
 
 class AttackType(Enum):
     """Types of security attacks"""
+    DOS_ATTACK = "dos_attack"
     DOS_FLOODING = "dos_flooding"
     RESOURCE_EXHAUSTION = "resource_exhaustion"
     NETWORK_JAMMING = "network_jamming"
@@ -195,29 +194,35 @@ class AttackerNode(SecureNode):
         self.attack_cooldown = 0.0
         self.target_list: List[int] = []
         
-    def select_attack_targets(self, protocol: 'SecureARPMECProtocol') -> List[Tuple[int, str]]:
-        """Select high-value targets for attack"""
+    def select_attack_targets(self, protocol: 'SecureARPMECProtocol') -> List[Tuple[int, str, float]]:
+        """Select high-value targets for attack with priority scoring"""
         targets = []
         
-        # Prioritize cluster heads
+        # Priority 1: Cluster Heads (highest value targets)
         for node in protocol.nodes.values():
             if node.state == NodeState.CLUSTER_HEAD and node.id != self.id:
                 distance = self.distance_to(node)
-                if distance <= protocol.communication_range * 2:
-                    targets.append((node.id, "CH"))
+                if distance <= protocol.communication_range * 3:
+                    priority = 10.0 - (distance / 100.0)  # Closer = higher priority
+                    targets.append((node.id, "CH", priority))
         
-        # Target MEC servers
+        # Priority 2: MEC servers (critical infrastructure)
         for mec_id, mec in protocol.mec_servers.items():
             distance = math.sqrt((self.x - mec.x)**2 + (self.y - mec.y)**2)
-            if distance <= protocol.mec_communication_range:
-                targets.append((mec_id, "MEC"))
+            if distance <= protocol.mec_communication_range * 1.5:
+                load = mec.get_load_percentage()
+                priority = 8.0 + (load * 2.0)  # Target heavily loaded MECs
+                targets.append((mec_id, "MEC", priority))
         
-        # Target IAR servers
+        # Priority 3: IAR servers (inter-cluster communication hubs)
         for iar_id, iar in protocol.iar_servers.items():
             distance = math.sqrt((self.x - iar.x)**2 + (self.y - iar.y)**2)
-            if distance <= iar.coverage_radius:
-                targets.append((iar_id, "IAR"))
+            if distance <= iar.coverage_radius * 1.2:
+                priority = 7.0 - (distance / 150.0)
+                targets.append((iar_id, "IAR", priority))
         
+        # Sort by priority (highest first)
+        targets.sort(key=lambda x: x[2], reverse=True)
         return targets
     
     def launch_dos_attack(self, target_id: int, protocol: 'SecureARPMECProtocol'):
@@ -272,6 +277,11 @@ class HoneypotNode(SecureNode):
         self.analysis_capability = random.uniform(0.8, 0.95)
         self.fake_vulnerabilities = ["high_load", "weak_auth", "buffer_overflow"]
         
+        # Tracking and isolation capabilities
+        self.tracked_attackers: Set[int] = set()
+        self.isolation_active: Set[int] = set()
+        self.forensics_log: List[Dict] = []
+        
     def mimic_important_service(self, service_type: str):
         """Mimic critical services to attract attackers"""
         if service_type == "CH":
@@ -281,8 +291,8 @@ class HoneypotNode(SecureNode):
             # Advertise as overloaded MEC server
             self.fake_load = random.uniform(0.8, 0.95)
     
-    def absorb_attack(self, attack_packet: AttackPacket) -> bool:
-        """Absorb and analyze incoming attack"""
+    def absorb_attack(self, attack_packet: AttackPacket, protocol: 'SecureARPMECProtocol' = None) -> bool:
+        """Absorb and analyze incoming attack with tracking and isolation"""
         if len(self.captured_attacks) < 1000:  # Capacity limit
             self.captured_attacks.append(attack_packet)
             
@@ -302,13 +312,22 @@ class HoneypotNode(SecureNode):
             profile['total_payload'] += attack_packet.payload_size
             profile['avg_frequency'] = (profile['avg_frequency'] + attack_packet.frequency) / 2
             
-            # Update threat level
+            # Update threat level and trigger countermeasures
             if profile['attack_count'] > 20:
                 profile['threat_level'] = ThreatLevel.CRITICAL
+                # Immediately isolate critical threats
+                if protocol and attacker_id not in self.isolation_active:
+                    self.isolate_attacker(attacker_id, protocol)
             elif profile['attack_count'] > 10:
                 profile['threat_level'] = ThreatLevel.HIGH
+                # Start tracking high threats
+                if protocol and attacker_id not in self.tracked_attackers:
+                    self.track_attacker(attacker_id, protocol)
             elif profile['attack_count'] > 5:
                 profile['threat_level'] = ThreatLevel.MEDIUM
+                # Begin monitoring
+                if protocol:
+                    self.track_attacker(attacker_id, protocol)
             
             return True
         return False
@@ -325,6 +344,63 @@ class HoneypotNode(SecureNode):
             ],
             'attack_patterns': list(set(attack.attack_type for attack in self.captured_attacks))
         }
+    
+    def track_attacker(self, attacker_id: int, protocol: 'SecureARPMECProtocol') -> bool:
+        """Start tracking a captured attacker"""
+        if attacker_id in protocol.nodes:
+            attacker = protocol.nodes[attacker_id]
+            self.tracked_attackers.add(attacker_id)
+            
+            # Move honeypot close to attacker for isolation
+            distance = self.distance_to(attacker)
+            if distance > 50:  # If too far, move closer
+                # Calculate direction to attacker
+                dx = attacker.x - self.x
+                dy = attacker.y - self.y
+                norm = math.sqrt(dx*dx + dy*dy)
+                if norm > 0:
+                    # Move 75% of the way to attacker
+                    self.x += 0.75 * dx
+                    self.y += 0.75 * dy
+            
+            # Log forensic information
+            forensic_entry = {
+                'timestamp': time.time(),
+                'attacker_id': attacker_id,
+                'attacker_position': (attacker.x, attacker.y),
+                'honeypot_position': (self.x, self.y),
+                'action': 'tracking_initiated',
+                'energy_level': attacker.energy,
+                'attack_history': len(self.captured_attacks)
+            }
+            self.forensics_log.append(forensic_entry)
+            return True
+        return False
+    
+    def isolate_attacker(self, attacker_id: int, protocol: 'SecureARPMECProtocol') -> bool:
+        """Isolate attacker by blocking their communications"""
+        if attacker_id in self.tracked_attackers:
+            self.isolation_active.add(attacker_id)
+            
+            # Block attacker's communications
+            if attacker_id in protocol.nodes:
+                attacker = protocol.nodes[attacker_id]
+                # Reduce attacker's communication range by jamming
+                original_range = getattr(attacker, 'original_comm_range', protocol.communication_range)
+                attacker.communication_range = original_range * 0.1  # Severely reduce range
+                
+                # Log isolation action
+                forensic_entry = {
+                    'timestamp': time.time(),
+                    'attacker_id': attacker_id,
+                    'action': 'isolation_activated',
+                    'communication_blocked': True,
+                    'original_range': original_range,
+                    'reduced_range': attacker.communication_range
+                }
+                self.forensics_log.append(forensic_entry)
+                return True
+        return False
 
 # =====================================================================================
 # SECURITY MONITORING AND DEFENSE SYSTEMS
@@ -451,6 +527,10 @@ class SecureARPMECProtocol(ARPMECProtocol):
         self.attack_detection_rate = 0.85
         self.false_positive_rate = 0.05
         
+        # Message exchange tracking for visualization
+        self.active_messages: List[Dict] = []
+        self.message_animations: Dict[str, Dict] = {}
+        
     def get_attackers(self) -> List[AttackerNode]:
         """Get all attacker nodes"""
         return [node for node in self.nodes.values() if isinstance(node, AttackerNode)]
@@ -467,7 +547,7 @@ class SecureARPMECProtocol(ARPMECProtocol):
         
         # Check if target is a honeypot
         if isinstance(target_node, HoneypotNode):
-            if target_node.absorb_attack(attack_packet):
+            if target_node.absorb_attack(attack_packet, self):
                 self.security_metrics.honeypot_captures += 1
                 
                 # Create security event
@@ -555,7 +635,8 @@ class SecureARPMECProtocol(ARPMECProtocol):
             if attacker.attack_cooldown <= 0 and random.random() < 0.005:  # Only 0.5% chance to attack
                 targets = attacker.select_attack_targets(self)
                 if targets:
-                    target_id, target_type = random.choice(targets)
+                    # Select highest priority target
+                    target_id, target_type, priority = targets[0]  # Already sorted by priority
                     attack_packet = attacker.launch_dos_attack(target_id, self)
                     if attack_packet:
                         self.active_attacks.append(attack_packet)
@@ -627,7 +708,10 @@ class SecureARPMECProtocol(ARPMECProtocol):
         self._process_inter_cluster_messages()
         self._process_mec_servers()
         
-        # Step 5: Security monitoring
+        # Step 5: Update message animations
+        self.update_message_animations()
+        
+        # Step 6: Security monitoring
         self.update_security_monitoring()
         
         # Step 6: Update security metrics
@@ -642,203 +726,90 @@ class SecureARPMECProtocol(ARPMECProtocol):
             self.security_metrics.threat_level = ThreatLevel.MEDIUM
         else:
             self.security_metrics.threat_level = ThreatLevel.LOW
-
-# =====================================================================================
-# COMPREHENSIVE VISUALIZATION SYSTEM
-# =====================================================================================
-
-class SecureARPMECVisualizer:
-    """Comprehensive visualization system for secure ARPMEC protocol"""
     
-    def __init__(self, protocol: SecureARPMECProtocol, area_size: int = 1000):
-        self.protocol = protocol
-        self.area_size = area_size
-        self.fig = None
-        self.ax = None
-        self.animation_obj = None
-        self.frame_count = 0
-        self.start_time = time.time()
+    def _process_inter_cluster_messages(self):
+        """Enhanced message processing with visualization tracking"""
+        super()._process_inter_cluster_messages()
         
-        # Visualization settings
-        self.colors = {
-            'normal': '#4444FF',
-            'attacker': '#FF0000',
-            'honeypot': '#FFD700',
-            'cluster_head': '#FF4444',
-            'mec_server': '#00AA00',
-            'iar_server': '#8000FF',
-            'attack': '#FF0000',
-            'countermeasure': '#00FFFF',
-            'honeypot_capture': '#FFD700'
-        }
-        
-        # Animation tracking
-        self.attack_animations: List[Dict] = []
-        self.trail_positions: Dict[str, List] = {}
-        
-    def setup_visualization(self):
-        """Setup the visualization environment"""
-        self.fig, self.ax = plt.subplots(figsize=(16, 12))
-        self.fig.patch.set_facecolor('white')
-        self.ax.set_facecolor('white')
-        
-        # Set limits and labels
-        self.ax.set_xlim(-100, self.area_size + 100)
-        self.ax.set_ylim(-100, self.area_size + 100)
-        self.ax.set_xlabel('X Position (meters)', color='black', fontsize=12)
-        self.ax.set_ylabel('Y Position (meters)', color='black', fontsize=12)
-        self.ax.grid(True, alpha=0.3, color='gray')
-        
-        # Style the plot
-        self.ax.tick_params(colors='black')
-        for spine in self.ax.spines.values():
-            spine.set_color('black')
-    
-    def draw_network_topology(self):
-        """Draw the network topology with PROPER cluster visualization and security overlay"""
-        # Clear previous drawings
-        self.ax.clear()
-        self.ax.set_xlim(-100, self.area_size + 100)
-        self.ax.set_ylim(-100, self.area_size + 100)
-        self.ax.set_facecolor('white')
-        self.ax.grid(True, alpha=0.3, color='gray')
-        
-        # Step 1: Draw cluster boundaries and relationships (ARPMEC FIRST!)
-        cluster_heads = self.protocol._get_cluster_heads()
-        
-        # Color clusters based on threat level
-        threat = self.protocol.security_metrics.threat_level
-        if threat == ThreatLevel.CRITICAL:
-            boundary_color = 'red'
-        elif threat == ThreatLevel.HIGH:
-            boundary_color = 'orange'
-        elif threat == ThreatLevel.MEDIUM:
-            boundary_color = 'yellow'
-        else:
-            boundary_color = 'green'
-            
-        for ch in cluster_heads:
-            # Draw cluster boundary circle (MORE VISIBLE)
-            boundary = Circle((ch.x, ch.y), self.protocol.communication_range,
-                            fill=False, color=boundary_color, alpha=0.9, linewidth=3)
-            self.ax.add_patch(boundary)
-            
-            # Draw lines connecting cluster members to cluster head (MORE VISIBLE)
-            for member_id in ch.cluster_members:
-                if member_id in self.protocol.nodes:
-                    member = self.protocol.nodes[member_id]
-                    if member.is_alive():
-                        # Draw thick, visible connection line
-                        self.ax.plot([ch.x, member.x], [ch.y, member.y], 
-                                   color=boundary_color, alpha=0.8, linewidth=3, linestyle='-')
-        
-        # Step 2: Draw nodes with their cluster relationships preserved
-        for node in self.protocol.nodes.values():
-            if not node.is_alive():
-                continue
-            
-            # Determine base node appearance based on ARPMEC role
-            if node.state == NodeState.CLUSTER_HEAD:
-                base_color = 'blue'
-                marker = '^'
-                size = 150
-                edge_color = 'darkblue'
-                edge_width = 3
-            elif node.state == NodeState.CLUSTER_MEMBER:
-                base_color = 'lightblue'
-                marker = 'o'
-                size = 80
-                edge_color = 'blue'
-                edge_width = 1
-            else:  # IDLE
-                base_color = 'gray'
-                marker = 'o'
-                size = 60
-                edge_color = 'darkgray'
-                edge_width = 1
-            
-            # Step 3: Override with security roles (SECURITY OVERLAY)
-            if isinstance(node, AttackerNode):
-                base_color = 'red'
-                marker = 'X'
-                size = 120
-                edge_color = 'darkred'
-                edge_width = 3
-                # Add threat indicator
-                threat_circle = Circle((node.x, node.y), 30, fill=False, 
-                                     color='red', alpha=0.8, linewidth=2)
-                self.ax.add_patch(threat_circle)
+        # Track new messages for visualization
+        for ch in self._get_cluster_heads():
+            for message in ch.inter_cluster_messages:
+                message_id = f"msg_{message.message_id}_{time.time()}"
                 
-            elif isinstance(node, HoneypotNode):
-                base_color = 'gold'
-                marker = 'h'
-                size = 100
-                edge_color = 'orange'
-                edge_width = 2
-                # Add honeypot glow
-                if node.deception_active:
-                    glow = Circle((node.x, node.y), 40, fill=False, 
-                                color='gold', alpha=0.5, linewidth=1)
-                    self.ax.add_patch(glow)
-            
-            # Draw the node
-            self.ax.scatter(node.x, node.y, c=base_color, s=size, marker=marker,
-                          edgecolors=edge_color, linewidth=edge_width, zorder=5)
-            
-            # Add node label with cluster info
-            label_text = f'N{node.id}'
-            if node.state == NodeState.CLUSTER_HEAD:
-                label_text += f'\nCH-{node.cluster_id}'
-            elif node.state == NodeState.CLUSTER_MEMBER and node.cluster_head_id:
-                label_text += f'\n→CH{node.cluster_head_id}'
-            
-            self.ax.text(node.x, node.y - 35, label_text, ha='center', 
-                       fontsize=7, color='black', weight='bold')
-            
-            # Add security status for special nodes
-            if isinstance(node, AttackerNode):
-                status = f"ATTACKER\nCD:{node.attack_cooldown:.0f}s"
-                self.ax.text(node.x, node.y + 40, status, ha='center', fontsize=6,
-                           color='red', weight='bold')
-            elif isinstance(node, HoneypotNode):
-                status = f"HONEYPOT\nCaptures:{len(node.captured_attacks)}"
-                self.ax.text(node.x, node.y + 40, status, ha='center', fontsize=6,
-                           color='orange', weight='bold')
-        
-        # Step 4: Draw MEC servers with load status
-        for mec_id, mec in self.protocol.mec_servers.items():
-            load_pct = mec.get_load_percentage()
-            
-            # Color based on load
-            if load_pct > 90:
-                mec_color = 'red'
-                status = "OVERLOADED"
-            elif load_pct > 70:
-                mec_color = 'orange'
-                status = "HIGH LOAD"
-            else:
-                mec_color = 'green'
-                status = "NORMAL"
-            
-            self.ax.scatter(mec.x, mec.y, c=mec_color, s=400, marker='s',
-                          edgecolors='black', linewidth=2, zorder=6)
-            self.ax.text(mec.x, mec.y - 45, f'MEC-{mec_id}', ha='center',
-                       fontsize=10, weight='bold', color='black')
-            self.ax.text(mec.x, mec.y + 45, f'{load_pct:.0f}%\n{status}',
-                       ha='center', fontsize=8, color='black', weight='bold')
-        
-        # Step 5: Draw IAR servers
-        for iar_id, iar in self.protocol.iar_servers.items():
-            self.ax.scatter(iar.x, iar.y, c='purple', s=250, marker='D',
-                          edgecolors='black', linewidth=2, zorder=6)
-            self.ax.text(iar.x, iar.y - 30, f'IAR-{iar_id}', ha='center',
-                       fontsize=9, weight='bold', color='black')
-            
-            # Show IAR coverage area
-            coverage = Circle((iar.x, iar.y), iar.coverage_radius,
-                            fill=False, color='purple', alpha=0.2, linewidth=1)
-            self.ax.add_patch(coverage)
+                # Find source and destination positions
+                source_pos = (ch.x, ch.y)
+                dest_pos = None
+                
+                if message.destination_cluster_id in self.nodes:
+                    dest_node = self.nodes[message.destination_cluster_id]
+                    dest_pos = (dest_node.x, dest_node.y)
+                else:
+                    # Check IAR servers
+                    for iar in self.iar_servers.values():
+                        if iar.id == message.destination_cluster_id:
+                            dest_pos = (iar.x, iar.y)
+                            break
+                
+                if dest_pos:
+                    message_info = {
+                        'id': message_id,
+                        'source_pos': source_pos,
+                        'dest_pos': dest_pos,
+                        'message_type': message.message_type,
+                        'timestamp': time.time(),
+                        'progress': 0.0,
+                        'active': True
+                    }
+                    self.active_messages.append(message_info)
     
+    def update_message_animations(self):
+        """Update message animation states"""
+        current_time = time.time()
+        
+        for message in self.active_messages[:]:
+            age = current_time - message['timestamp']
+            message['progress'] = min(1.0, age / 2.0)  # 2 second animation
+            
+            if message['progress'] >= 1.0:
+                message['active'] = False
+                self.active_messages.remove(message)
+    
+    def draw_message_exchanges(self):
+        """Draw inter-cluster message exchanges"""
+        if not hasattr(self.protocol, 'active_messages'):
+            return
+            
+        for message in self.protocol.active_messages:
+            if not message.get('active', False):
+                continue
+                
+            source_x, source_y = message['source_pos']
+            dest_x, dest_y = message['dest_pos']
+            progress = message['progress']
+            
+            # Calculate current position of message
+            current_x = source_x + (dest_x - source_x) * progress
+            current_y = source_y + (dest_y - source_y) * progress
+            
+            # Draw message path
+            self.ax.plot([source_x, dest_x], [source_y, dest_y], 
+                        color='cyan', alpha=0.3, linewidth=1, linestyle=':')
+            
+            # Draw moving message packet
+            message_color = {
+                'data_request': 'blue',
+                'data_response': 'green', 
+                'route_discovery': 'orange',
+                'mec_task': 'purple'
+            }.get(message.get('message_type', 'default'), 'cyan')
+            
+            self.ax.scatter(current_x, current_y, c=message_color, s=30, 
+                          marker='>', alpha=0.8, zorder=6)
+            
+            # Add message label
+            self.ax.text(current_x + 5, current_y + 5, 
+                        f"MSG", fontsize=6, color=message_color, weight='bold')
+
     def draw_security_events(self):
         """Draw active security events"""
         current_time = time.time()
@@ -872,14 +843,21 @@ class SecureARPMECVisualizer:
                               alpha=alpha, zorder=98)
     
     def draw_security_dashboard(self):
-        """Draw security monitoring dashboard"""
+        """Draw enhanced security monitoring dashboard"""
         # Security metrics panel
         metrics = self.protocol.security_metrics
+        
+        # Count honeypot intelligence
+        total_captures = sum(len(hp.captured_attacks) for hp in self.protocol.get_honeypots())
+        tracked_attackers = sum(len(hp.tracked_attackers) for hp in self.protocol.get_honeypots())
+        isolated_attackers = sum(len(hp.isolation_active) for hp in self.protocol.get_honeypots())
         
         dashboard_text = f"""🚨 SECURITY DASHBOARD 🚨
 Active Attacks: {metrics.total_attacks_detected}
 Attacks Blocked: {metrics.attacks_blocked}
-Honeypot Captures: {metrics.honeypot_captures}
+Honeypot Captures: {total_captures}
+Tracked Attackers: {tracked_attackers}
+Isolated Attackers: {isolated_attackers}
 Network Availability: {metrics.network_availability:.1f}%
 Threat Level: {metrics.threat_level.value.upper()}
 """
@@ -933,6 +911,9 @@ IAR Servers: {len(self.protocol.iar_servers)}
         # Draw network topology
         self.draw_network_topology()
         
+        # Draw message exchanges
+        self.draw_message_exchanges()
+        
         # Draw security events
         self.draw_security_events()
         
@@ -969,6 +950,301 @@ IAR Servers: {len(self.protocol.iar_servers)}
         plt.show()
         
         return self.animation_obj
+
+# =====================================================================================
+# VISUALIZATION CLASS
+# =====================================================================================
+
+class SecureARPMECVisualizer:
+    """Comprehensive visualization for secure ARPMEC protocol"""
+    
+    def __init__(self, protocol: SecureARPMECProtocol, area_size: int = 1000):
+        self.protocol = protocol
+        self.area_size = area_size
+        self.fig = None
+        self.ax = None
+        
+    def setup_visualization(self):
+        """Setup comprehensive visualization"""
+        self.fig, self.ax = plt.subplots(figsize=(16, 12))
+        self.fig.patch.set_facecolor('white')
+        self.ax.set_facecolor('white')
+        
+        self.ax.set_xlim(0, self.area_size)
+        self.ax.set_ylim(0, self.area_size)
+        self.ax.set_xlabel('X Position (meters)', color='black', fontsize=12)
+        self.ax.set_ylabel('Y Position (meters)', color='black', fontsize=12)
+        self.ax.grid(True, alpha=0.3, color='gray')
+        
+        self.ax.tick_params(colors='black')
+        for spine in self.ax.spines.values():
+            spine.set_color('black')
+    
+    def draw_cluster_boundaries(self):
+        """Draw cluster boundaries with threat-based coloring"""
+        cluster_heads = self.protocol._get_cluster_heads()
+        for ch in cluster_heads:
+            # Color based on threat level
+            threat = self.protocol.security_monitor.metrics.threat_level
+            if threat == ThreatLevel.HIGH:
+                boundary_color = 'red'
+                alpha = 0.7
+            elif threat == ThreatLevel.MEDIUM:
+                boundary_color = 'orange'
+                alpha = 0.6
+            else:
+                boundary_color = 'green'
+                alpha = 0.5
+                
+            boundary = Circle((ch.x, ch.y), self.protocol.communication_range,
+                            fill=False, color=boundary_color, alpha=alpha, 
+                            linewidth=2, linestyle='--')
+            self.ax.add_patch(boundary)
+    
+    def draw_cluster_connections(self):
+        """Draw connections between cluster members and their CHs"""
+        cluster_heads = self.protocol._get_cluster_heads()
+        
+        for ch in cluster_heads:
+            # Find cluster members
+            for node in self.protocol.nodes.values():
+                if (node.is_alive() and node.id != ch.id and 
+                    node.state == NodeState.CLUSTER_MEMBER):
+                    # Check if this node is in CH's cluster
+                    if node.cluster_head_id == ch.id:
+                        # Draw connection line
+                        self.ax.plot([ch.x, node.x], [ch.y, node.y], 
+                                   'gray', alpha=0.4, linewidth=1, zorder=1)
+    
+    def draw_nodes(self):
+        """Draw all nodes with proper styling"""
+        for node in self.protocol.nodes.values():
+            if not node.is_alive():
+                continue
+            
+            # Determine node appearance based on type and state
+            if hasattr(node, 'is_attacker') and node.is_attacker:
+                color = 'red'
+                marker = 'X'
+                size = 120
+                edge_color = 'darkred'
+            elif hasattr(node, 'is_honeypot') and node.is_honeypot:
+                color = 'gold'
+                marker = 'h'
+                size = 100
+                edge_color = 'orange'
+            elif node.state == NodeState.CLUSTER_HEAD:
+                color = 'blue'
+                marker = '^'
+                size = 150
+                edge_color = 'darkblue'
+            else:
+                color = 'lightblue'
+                marker = 'o'
+                size = 80
+                edge_color = 'blue'
+            
+            # Draw node
+            self.ax.scatter(node.x, node.y, c=color, s=size, marker=marker,
+                          edgecolors=edge_color, linewidth=2, zorder=5)
+            
+            # Add node label with energy info
+            energy_pct = (node.energy / 200.0) * 100  # Assuming max energy ~200
+            label = f'N{node.id}\n{energy_pct:.0f}%'
+            
+            self.ax.text(node.x, node.y - 30, label, ha='center', va='top',
+                       fontsize=8, color='white', weight='bold',
+                       bbox=dict(boxstyle="round,pad=0.2", facecolor='black', alpha=0.7))
+    
+    def draw_infrastructure(self):
+        """Draw MEC and IAR servers"""
+        # Draw MEC servers
+        for mec_id, mec in self.protocol.mec_servers.items():
+            self.ax.scatter(mec.x, mec.y, c='green', s=250, marker='s',
+                          edgecolors='darkgreen', linewidth=3, zorder=6)
+            self.ax.text(mec.x, mec.y - 35, f'MEC{mec_id}', ha='center', va='top',
+                       fontsize=10, weight='bold', color='white',
+                       bbox=dict(boxstyle="round,pad=0.3", facecolor='green', alpha=0.8))
+        
+        # Draw IAR servers
+        for iar_id, iar in self.protocol.iar_servers.items():
+            self.ax.scatter(iar.x, iar.y, c='purple', s=200, marker='D',
+                          edgecolors='indigo', linewidth=3, zorder=6)
+            self.ax.text(iar.x, iar.y - 30, f'IAR{iar_id}', ha='center', va='top',
+                       fontsize=9, weight='bold', color='white',
+                       bbox=dict(boxstyle="round,pad=0.3", facecolor='purple', alpha=0.8))
+    
+    def draw_message_exchanges(self):
+        """Draw recent message exchanges"""
+        if hasattr(self.protocol, 'recent_messages'):
+            current_time = self.protocol.current_time_slot
+            
+            for msg in self.protocol.recent_messages:
+                # Only show recent messages (last 3 time slots)
+                if current_time - msg.get('timestamp', 0) <= 3:
+                    sender_id = msg.get('sender_id')
+                    receiver_id = msg.get('receiver_id')
+                    msg_type = msg.get('type', 'unknown')
+                    
+                    if (sender_id in self.protocol.nodes and 
+                        receiver_id in self.protocol.nodes):
+                        
+                        sender = self.protocol.nodes[sender_id]
+                        receiver = self.protocol.nodes[receiver_id]
+                        
+                        # Color based on message type
+                        if 'attack' in msg_type.lower():
+                            color = 'red'
+                            alpha = 0.8
+                        elif 'security' in msg_type.lower():
+                            color = 'orange'
+                            alpha = 0.7
+                        else:
+                            color = 'blue'
+                            alpha = 0.5
+                        
+                        # Draw message arrow
+                        self.ax.annotate('', xy=(receiver.x, receiver.y), 
+                                       xytext=(sender.x, sender.y),
+                                       arrowprops=dict(arrowstyle='->', 
+                                                     color=color, alpha=alpha,
+                                                     lw=2, shrinkA=10, shrinkB=10),
+                                       zorder=3)
+    
+    def draw_security_dashboard(self):
+        """Draw comprehensive security dashboard"""
+        metrics = self.protocol.security_monitor.metrics
+        
+        # Main security panel
+        # Calculate detection rate from available data
+        detection_rate = 0.0
+        if metrics.total_attacks_detected > 0:
+            detection_rate = (metrics.attacks_blocked / metrics.total_attacks_detected) * 100
+        
+        security_text = f"""🔒 SECURITY STATUS
+Threat Level: {metrics.threat_level.value.upper()}
+Total Attacks: {metrics.total_attacks_detected}
+Attacks Blocked: {metrics.attacks_blocked}
+Honeypot Captures: {metrics.honeypot_captures}
+Network Availability: {metrics.network_availability:.1f}%
+Detection Rate: {detection_rate:.1f}%"""
+        
+        # Color based on threat level
+        if metrics.threat_level == ThreatLevel.HIGH:
+            panel_color = 'red'
+        elif metrics.threat_level == ThreatLevel.MEDIUM:
+            panel_color = 'orange'
+        else:
+            panel_color = 'green'
+        
+        self.ax.text(0.02, 0.98, security_text, transform=self.ax.transAxes,
+                   fontsize=11, verticalalignment='top', horizontalalignment='left',
+                   bbox=dict(boxstyle="round,pad=0.5", facecolor=panel_color, alpha=0.9),
+                   color='white', weight='bold', zorder=200)
+        
+        # Protocol status panel
+        cluster_heads = self.protocol._get_cluster_heads()
+        active_nodes = sum(1 for n in self.protocol.nodes.values() if n.is_alive())
+        
+        protocol_text = f"""📊 PROTOCOL STATUS
+Time Step: {self.protocol.current_time_slot}
+Active Nodes: {active_nodes}
+Cluster Heads: {len(cluster_heads)}
+MEC Servers: {len(self.protocol.mec_servers)}
+IAR Servers: {len(self.protocol.iar_servers)}
+Avg Energy: {sum(n.energy for n in self.protocol.nodes.values() if n.is_alive()) / active_nodes:.1f}J"""
+        
+        self.ax.text(0.98, 0.98, protocol_text, transform=self.ax.transAxes,
+                   fontsize=11, verticalalignment='top', horizontalalignment='right',
+                   bbox=dict(boxstyle="round,pad=0.5", facecolor='blue', alpha=0.9),
+                   color='white', weight='bold', zorder=200)
+        
+        # Attack activity panel (bottom left)
+        recent_attacks = [e for e in self.protocol.security_monitor.security_events 
+                         if e.event_type == AttackType.DOS_ATTACK and 
+                         self.protocol.current_time_slot - e.timestamp <= 5]
+        
+        attack_text = f"""⚠️ ATTACK ACTIVITY
+Recent Attacks: {len(recent_attacks)}
+Active Attackers: {sum(1 for n in self.protocol.nodes.values() if hasattr(n, 'is_attacker') and n.is_attacker and n.is_alive())}
+Active Honeypots: {sum(1 for n in self.protocol.nodes.values() if hasattr(n, 'is_honeypot') and n.is_honeypot and n.is_alive())}
+Isolated Nodes: {sum(len(hp.isolation_active) for hp in self.protocol.get_honeypots())}"""
+        
+        self.ax.text(0.02, 0.35, attack_text, transform=self.ax.transAxes,
+                   fontsize=10, verticalalignment='top', horizontalalignment='left',
+                   bbox=dict(boxstyle="round,pad=0.4", facecolor='darkred', alpha=0.8),
+                   color='white', weight='bold', zorder=200)
+    
+    def draw_legend(self):
+        """Draw comprehensive legend"""
+        legend_elements = [
+            plt.Line2D([0], [0], marker='^', color='w', markerfacecolor='blue', 
+                      markersize=12, label='Cluster Head'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='lightblue', 
+                      markersize=10, label='Regular Node'),
+            plt.Line2D([0], [0], marker='X', color='w', markerfacecolor='red', 
+                      markersize=12, label='Attacker'),
+            plt.Line2D([0], [0], marker='h', color='w', markerfacecolor='gold', 
+                      markersize=12, label='Honeypot'),
+            plt.Line2D([0], [0], marker='s', color='w', markerfacecolor='green', 
+                      markersize=12, label='MEC Server'),
+            plt.Line2D([0], [0], marker='D', color='w', markerfacecolor='purple', 
+                      markersize=10, label='IAR Server')
+        ]
+        
+        self.ax.legend(handles=legend_elements, loc='lower right', 
+                     fontsize=10, framealpha=0.9)
+    
+    def update_frame(self, frame):
+        """Update visualization frame"""
+        # Run protocol step
+        self.protocol.run_protocol_step(frame)
+        
+        # Clear and redraw
+        self.ax.clear()
+        self.ax.set_xlim(0, self.area_size)
+        self.ax.set_ylim(0, self.area_size)
+        self.ax.set_facecolor('white')
+        self.ax.grid(True, alpha=0.3, color='gray')
+        
+        # Draw all components
+        self.draw_cluster_boundaries()
+        self.draw_cluster_connections()
+        self.draw_nodes()
+        self.draw_infrastructure()
+        self.draw_message_exchanges()
+        self.draw_security_dashboard()
+        self.draw_legend()
+        
+        # Set title with current status
+        threat = self.protocol.security_monitor.metrics.threat_level
+        active_nodes = sum(1 for n in self.protocol.nodes.values() if n.is_alive())
+        
+        title = (f'🔒 SECURE ARPMEC PROTOCOL - Frame {frame} - '
+                f'Threat: {threat.value.upper()} - '
+                f'Nodes: {active_nodes}')
+        
+        self.ax.set_title(title, fontsize=16, weight='bold', color='black', pad=20)
+        
+        # Style axes
+        self.ax.set_xlabel('X Position (meters)', color='black', fontsize=12)
+        self.ax.set_ylabel('Y Position (meters)', color='black', fontsize=12)
+        self.ax.tick_params(colors='black')
+        for spine in self.ax.spines.values():
+            spine.set_color('black')
+    
+    def run_animation(self, interval: int = 1000):
+        """Run comprehensive visualization animation"""
+        self.setup_visualization()
+        
+        anim = animation.FuncAnimation(
+            self.fig, self.update_frame, interval=interval,
+            blit=False, cache_frame_data=False
+        )
+        
+        plt.tight_layout()
+        plt.show()
+        return anim
 
 # =====================================================================================
 # COMPREHENSIVE DEMO AND TESTING
